@@ -1,0 +1,619 @@
+﻿@model GetTourByIdDto
+
+@{
+    ViewData["Title"] = "Tur Duzenle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turlar";
+    ViewData["Breadcrumb"] = "Turlar / Duzenle";
+}
+
+<style>
+    .edit-grid { display:grid; grid-template-columns:1fr 320px; gap:24px; align-items:start; }
+    .v-card { background:#fff; border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); }
+    .v-card-header { padding:18px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
+    .v-card-icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+    .v-card-title { font-size:14px; font-weight:700; color:var(--t1); }
+    .v-card-sub { font-size:11.5px; color:var(--t3); margin-top:2px; }
+    .form-body { padding:22px 24px; display:flex; flex-direction:column; gap:18px; }
+    .form-row { display:grid; gap:16px; }
+    .form-row.cols-3 { grid-template-columns:1fr 1fr 1fr; }
+    .form-group { display:flex; flex-direction:column; gap:6px; }
+    .form-label { font-size:13px; font-weight:600; color:var(--t2); display:flex; align-items:center; gap:6px; }
+    .form-label .req { color:#ef4444; font-size:15px; line-height:1; }
+    .form-hint { font-size:11.5px; color:var(--t3); }
+    .form-control { width:100%; height:42px; padding:0 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-canvas); color:var(--t1); font-family:inherit; font-size:14px; transition:border-color .18s,box-shadow .18s; outline:none; appearance:none; }
+    .form-control:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); background:#fff; }
+    .form-control::placeholder { color:var(--t3); }
+    .form-control.input-validation-error { border-color:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.10); }
+    textarea.form-control { height:auto; padding:12px 14px; resize:vertical; min-height:108px; line-height:1.6; }
+    select.form-control { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:36px; cursor:pointer; }
+    .field-validation-error:empty { display:none !important; }
+    .field-validation-error:not(:empty) { font-size:12px; color:#ef4444; display:flex; align-items:center; gap:5px; }
+    .field-validation-error:not(:empty)::before { content:'\f071'; font-family:'Font Awesome 6 Free'; font-weight:900; font-size:10px; flex-shrink:0; }
+    .id-field { display:flex; align-items:center; gap:9px; height:42px; padding:0 14px; border:1.5px solid var(--border); border-radius:var(--radius-sm); background:#f8fafc; font-size:12.5px; color:var(--t3); font-family:monospace; }
+    .input-group { display:flex; align-items:stretch; border:1.5px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; transition:border-color .18s,box-shadow .18s; background:var(--bg-canvas); }
+    .input-group:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); background:#fff; }
+    .input-prefix { display:flex; align-items:center; padding:0 12px; background:#f1f5f9; border-right:1.5px solid var(--border); font-size:13px; font-weight:600; color:var(--t3); white-space:nowrap; flex-shrink:0; }
+    .input-group .form-control { border:none !important; box-shadow:none !important; background:transparent !important; border-radius:0; flex:1; }
+    .badge-options { display:flex; flex-wrap:wrap; gap:8px; }
+    .badge-opt { display:none; }
+    .badge-opt + label { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer; border:2px solid transparent; transition:all .16s; user-select:none; }
+    .badge-opt:checked + label { border-color:currentColor; box-shadow:0 0 0 3px rgba(0,0,0,.06); }
+    .badge-yeni + label  { background:rgba(34,197,94,.12);  color:#16a34a; }
+    .badge-pop + label   { background:rgba(239,68,68,.1);   color:#dc2626; }
+    .badge-indir + label { background:rgba(245,158,11,.12); color:#b45309; }
+    .badge-ozel + label  { background:rgba(139,92,246,.1);  color:#7c3aed; }
+    .badge-none + label  { background:#f1f5f9; color:var(--t3); }
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; background:var(--bg-canvas); border:1.5px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; gap:16px; transition:border-color .18s,background .18s; user-select:none; }
+    .toggle-row:has(.toggle-input:checked) { border-color:var(--accent); background:#f0f8ff; }
+    .toggle-label-group { display:flex; flex-direction:column; gap:3px; }
+    .toggle-title { font-size:13.5px; font-weight:600; color:var(--t1); }
+    .toggle-desc { font-size:11.5px; color:var(--t3); }
+    .toggle-input { appearance:none; -webkit-appearance:none; width:44px; height:24px; border-radius:99px; background:#cbd5e1; cursor:pointer; transition:background .2s; position:relative; display:block; flex-shrink:0; }
+    .toggle-input::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.2); transition:transform .2s; }
+    .toggle-input:checked { background:var(--accent); }
+    .toggle-input:checked::after { transform:translateX(20px); }
+    .change-alert { display:none; align-items:center; gap:9px; padding:10px 14px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.25); border-radius:var(--radius-sm); font-size:12.5px; color:#92400e; }
+    .change-alert.visible { display:flex; }
+    .change-alert i { color:#f59e0b; font-size:13px; flex-shrink:0; }
+    .alert-danger { padding:12px 16px; background:rgba(239,68,68,.06); border:1px solid rgba(239,68,68,.2); border-radius:var(--radius-sm); font-size:13px; color:#b91c1c; align-items:flex-start; gap:10px; }
+    .alert-danger i { flex-shrink:0; margin-top:1px; }
+    .alert-danger ul { margin:4px 0 0 14px; }
+    .alert-danger li { margin-bottom:2px; }
+    .url-preview-img { width:100%; height:120px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--border); display:none; margin-top:8px; }
+    .url-preview-img.visible { display:block; }
+    .form-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .btn { display:inline-flex; align-items:center; gap:7px; padding:0 18px; height:40px; border-radius:var(--radius-sm); font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; border:none; text-decoration:none; transition:all .18s; white-space:nowrap; }
+    .btn-primary { background:var(--accent); color:#fff; box-shadow:0 2px 8px var(--accent-glow); }
+    .btn-primary:hover { background:#0369a1; box-shadow:0 4px 16px rgba(2,132,199,.28); transform:translateY(-1px); }
+    .btn-ghost { background:transparent; border:1.5px solid var(--border); color:var(--t2); }
+    .btn-ghost:hover { background:var(--bg-hover); color:var(--t1); }
+    .btn-danger-soft { background:rgba(239,68,68,.07); border:1.5px solid rgba(239,68,68,.2); color:#dc2626; }
+    .btn-danger-soft:hover { background:rgba(239,68,68,.14); border-color:rgba(239,68,68,.35); }
+    .side-panel { display:flex; flex-direction:column; gap:20px; }
+    .tour-card-preview { margin:16px; border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+    .tcp-img-ph { width:100%; height:130px; background:linear-gradient(135deg,#e0f2fe,#bfdbfe); display:flex; align-items:center; justify-content:center; color:#93c5fd; font-size:32px; }
+    #prevImg { width:100%; height:130px; object-fit:cover; display:none; }
+    .tcp-body-prev { padding:12px 14px; background:#fff; }
+    .tcp-badge-prev { display:inline-flex; align-items:center; padding:2px 9px; border-radius:20px; font-size:10.5px; font-weight:700; margin-bottom:7px; }
+    .tcp-title-prev { font-size:13.5px; font-weight:700; color:var(--t1); line-height:1.3; margin-bottom:8px; min-height:18px; }
+    .tcp-meta-prev { display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--t3); }
+    .tcp-meta-prev span { display:flex; align-items:center; gap:4px; }
+    .tcp-price-prev { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-top:1px solid var(--border); background:#fff; }
+    .tcp-price-val { font-size:15px; font-weight:800; color:var(--accent); }
+    .tcp-status { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; }
+    .tcp-status.active { background:rgba(34,197,94,.1); color:#16a34a; }
+    .tcp-status.inactive { background:rgba(148,163,184,.1); color:#64748b; }
+    .meta-list { padding:16px 20px; display:flex; flex-direction:column; gap:11px; }
+    .meta-row { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+    .meta-key { color:var(--t3); display:flex; align-items:center; gap:7px; }
+    .meta-key i { width:14px; text-align:center; font-size:12px; }
+    .meta-val { font-weight:600; color:var(--t1); font-size:12.5px; }
+    .meta-sep { height:1px; background:var(--border); }
+    .danger-zone { padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
+    .danger-zone p { font-size:12.5px; color:var(--t3); line-height:1.5; }
+    .checklist-item { display:flex; align-items:center; gap:9px; transition:all .2s; }
+    .checklist-item.done i { color:#16a34a !important; }
+    .checklist-item.done span { color:var(--t1); font-weight:500; }
+    @@media (max-width:960px) { .edit-grid { grid-template-columns:1fr; } .form-row.cols-3 { grid-template-columns:1fr 1fr; } }
+    @@media (max-width:540px) { .form-row.cols-3 { grid-template-columns:1fr; } }
+</style>
+
+<!-- Sayfa Basligi -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <a href="/Tour/TourList/" class="btn btn-ghost" style="height:38px;padding:0 14px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Tur Düzenle</h1>
+            <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+                <strong style="color:var(--t2);" id="pageTitle">@Model?.Title</strong> turunu düzenliyorsunuz.
+            </p>
+        </div>
+    </div>
+    @if (Model != null)
+    {
+        <a href="/turlar/@Model.TourId" target="_blank" class="btn btn-ghost">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> Sitede Görüntüle
+        </a>
+    }
+</div>
+
+<div class="edit-grid">
+
+    <!-- Sol: Form -->
+    <form method="post" novalidate id="editTourForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="TourId" />
+
+        <div style="display:flex;flex-direction:column;gap:20px;">
+
+            <div class="change-alert" id="changeAlert">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                Kaydedilmemiş değişiklikleriniz var. Kaydetmeyi unutmayın.
+            </div>
+
+            <div asp-validation-summary="ModelOnly" class="alert-danger" style="display:none;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <div><strong>Hataları düzeltin:</strong><ul></ul></div>
+            </div>
+
+            <!-- 1. Temel Bilgiler -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-circle-info"></i></div>
+                    <div><div class="v-card-title">Temel Bilgiler</div><div class="v-card-sub">Başlık, açıklama ve kategori</div></div>
+                </div>
+                <div class="form-body">
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-fingerprint" style="color:var(--accent);font-size:12px;"></i> Tur ID</label>
+                        <div class="id-field"><i class="fa-solid fa-lock"></i>&nbsp;@Model?.TourId</div>
+                        <span class="form-hint">Otomatik atanmıştır, değiştirilemez.</span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Title" class="form-label"><i class="fa-solid fa-heading" style="color:var(--accent);font-size:12px;"></i> Tur Başlığı <span class="req">*</span></label>
+                        <input asp-for="Title" class="form-control" id="tourTitle" placeholder="Örn: Kapadokya Balonlu Tur" maxlength="120" autocomplete="off" />
+                        <span asp-validation-for="Title" class="field-validation-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="Description" class="form-label"><i class="fa-solid fa-align-left" style="color:var(--accent);font-size:12px;"></i> Açıklama <span class="req">*</span></label>
+                        <textarea asp-for="Description" class="form-control" id="tourDesc" rows="4" placeholder="Tur güzergahı ve dahil olan hizmetler…"></textarea>
+                        <span asp-validation-for="Description" class="field-validation-error"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="CategoryId" class="form-label"><i class="fa-solid fa-layer-group" style="color:var(--accent);font-size:12px;"></i> Kategori <span class="req">*</span></label>
+                        <select asp-for="CategoryId" class="form-control" id="tourCat" asp-items="ViewBag.Categories">
+                            <option value="">— Kategori Seçin —</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="field-validation-error"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Tur Detaylari -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fa-solid fa-sliders"></i></div>
+                    <div><div class="v-card-title">Tur Detayları</div><div class="v-card-sub">Süre, kapasite ve fiyat</div></div>
+                </div>
+                <div class="form-body">
+                    <div class="form-row cols-3">
+                        <div class="form-group">
+                            <label asp-for="DayCount" class="form-label"><i class="fa-regular fa-calendar-days" style="color:var(--accent);font-size:12px;"></i> Gün Sayısı <span class="req">*</span></label>
+                            <div class="input-group">
+                                <span class="input-prefix"><i class="fa-solid fa-sun" style="font-size:11px;"></i></span>
+                                <input asp-for="DayCount" class="form-control" type="number" id="tourDays" min="1" max="365" />
+                            </div>
+                            <span asp-validation-for="DayCount" class="field-validation-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Capacity" class="form-label"><i class="fa-solid fa-users" style="color:var(--accent);font-size:12px;"></i> Kapasite <span class="req">*</span></label>
+                            <div class="input-group">
+                                <span class="input-prefix"><i class="fa-solid fa-person" style="font-size:11px;"></i></span>
+                                <input asp-for="Capacity" class="form-control" type="number" id="tourCapacity" min="1" max="999" />
+                            </div>
+                            <span asp-validation-for="Capacity" class="field-validation-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Price" class="form-label"><i class="fa-solid fa-tag" style="color:var(--accent);font-size:12px;"></i> Fiyat (₺) <span class="req">*</span></label>
+                            <div class="input-group">
+                                <span class="input-prefix">₺</span>
+                                <input asp-for="Price" class="form-control" type="number" id="tourPrice" min="0" step="0.01" />
+                            </div>
+                            <span asp-validation-for="Price" class="field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Gorsel ve Etiket -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(168,85,247,.1);color:#a855f7;"><i class="fa-solid fa-image"></i></div>
+                    <div><div class="v-card-title">Görsel & Etiket</div><div class="v-card-sub">Kapak görseli URL ve tur rozeti</div></div>
+                </div>
+                <div class="form-body">
+                    <div class="form-group">
+                        <label asp-for="CoverImageUrl" class="form-label"><i class="fa-solid fa-link" style="color:var(--accent);font-size:12px;"></i> Kapak Görseli URL</label>
+                        <div class="input-group">
+                            <span class="input-prefix" style="font-size:11px;">https://</span>
+                            <input asp-for="CoverImageUrl" class="form-control" id="coverUrlInput" autocomplete="off" />
+                        </div>
+                        <span asp-validation-for="CoverImageUrl" class="field-validation-error"></span>
+                        <img id="coverPreviewImg" class="url-preview-img" src="" alt="Kapak Önizleme" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fa-solid fa-certificate" style="color:var(--accent);font-size:12px;"></i> Tur Rozeti</label>
+                        <div class="badge-options">
+                            <input type="radio" name="Badge" id="badgeNone"  value=""         class="badge-opt badge-none"  @(string.IsNullOrEmpty(Model?.Badge) ? "checked" : "") /><label for="badgeNone"><i class="fa-solid fa-ban"></i> Rozet Yok</label>
+                            <input type="radio" name="Badge" id="badgeYeni"  value="Yeni"     class="badge-opt badge-yeni"  @(Model?.Badge == "Yeni" ? "checked" : "")    /><label for="badgeYeni"><i class="fa-solid fa-star"></i> Yeni</label>
+                            <input type="radio" name="Badge" id="badgePop"   value="Popüler"  class="badge-opt badge-pop"   @(Model?.Badge == "Popüler" ? "checked" : "") /><label for="badgePop"><i class="fa-solid fa-fire"></i> Popüler</label>
+                            <input type="radio" name="Badge" id="badgeIndir" value="İndirim"  class="badge-opt badge-indir" @(Model?.Badge == "İndirim" ? "checked" : "") /><label for="badgeIndir"><i class="fa-solid fa-percent"></i> İndirim</label>
+                            <input type="radio" name="Badge" id="badgeOzel"  value="Özel"     class="badge-opt badge-ozel"  @(Model?.Badge == "Özel" ? "checked" : "")   /><label for="badgeOzel"><i class="fa-solid fa-gem"></i> Özel</label>
+                        </div>
+                        <span asp-validation-for="Badge" class="field-validation-error"></span>
+                    </div>
+                </div>
+            </div>
+            <!-- 4. Harita Konumu -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(16,185,129,.1); color:#10b981;">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div>
+                        <div class="v-card-title">Harita Konumu</div>
+                        <div class="v-card-sub">Konum görseli, başlık ve açıklama</div>
+                    </div>
+                </div>
+
+                <div class="form-body">
+
+                    <!-- MapLocationImageUrl -->
+                    <div class="form-group">
+                        <label asp-for="MapLocationImageUrl" class="form-label">
+                            <i class="fa-solid fa-link" style="color:var(--accent);font-size:12px;"></i>
+                            Konum Görseli URL
+                        </label>
+                        <div class="input-group">
+                            <span class="input-prefix" style="font-size:11px;">https://</span>
+                            <input asp-for="MapLocationImageUrl"
+                                   class="form-control"
+                                   placeholder="cdn.vitour.com/images/konum.jpg"
+                                   autocomplete="off" />
+                        </div>
+                        <span asp-validation-for="MapLocationImageUrl" class="field-validation-error"></span>
+                    </div>
+
+                    <!-- MapLocationTitle -->
+                    <div class="form-group">
+                        <label asp-for="MapLocationTitle" class="form-label">
+                            <i class="fa-solid fa-heading" style="color:var(--accent);font-size:12px;"></i>
+                            Konum Başlığı
+                        </label>
+                        <input asp-for="MapLocationTitle"
+                               class="form-control"
+                               placeholder="Örn: Kapadokya, Nevşehir"
+                               autocomplete="off" />
+                        <span asp-validation-for="MapLocationTitle" class="field-validation-error"></span>
+                    </div>
+
+                    <!-- MapLocationDescription -->
+                    <div class="form-group">
+                        <label asp-for="MapLocationDescription" class="form-label">
+                            <i class="fa-solid fa-align-left" style="color:var(--accent);font-size:12px;"></i>
+                            Konum Açıklaması
+                        </label>
+                        <textarea asp-for="MapLocationDescription"
+                                  class="form-control"
+                                  placeholder="Konum hakkında kısa bir açıklama…"
+                                  rows="3"></textarea>
+                        <span asp-validation-for="MapLocationDescription" class="field-validation-error"></span>
+                    </div>
+
+                </div>
+            </div>
+            <!-- 5. Yayin Durumu -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(34,197,94,.1);color:#16a34a;"><i class="fa-solid fa-rocket"></i></div>
+                    <div><div class="v-card-title">Yayın Durumu</div><div class="v-card-sub">Turu yayınla veya pasife al</div></div>
+                </div>
+                <div class="form-body" style="padding-bottom:8px;">
+                    <div class="form-group">
+                        <label class="toggle-row" for="Status">
+                            <div class="toggle-label-group">
+                                <span class="toggle-title">Turu Yayında Tut</span>
+                                <span class="toggle-desc">Pasife alınan turlar siteden kaldırılır, rezervasyonlar etkilenmez.</span>
+                            </div>
+                            <input asp-for="Status" type="checkbox" class="toggle-input" id="Status" />
+                        </label>
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <a href="/admin/turlar" class="btn btn-ghost"><i class="fa-solid fa-xmark"></i> İptal</a>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+    <!-- Sag Panel -->
+    <div class="side-panel">
+
+        <!-- Canli Onizleme -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(168,85,247,.1);color:#a855f7;"><i class="fa-solid fa-eye"></i></div>
+                <div><div class="v-card-title">Kart Önizleme</div><div class="v-card-sub">Değişiklikler anlık yansır</div></div>
+            </div>
+            <div class="tour-card-preview">
+                <div style="position:relative;">
+                    <div id="prevImgPh" class="tcp-img-ph"><i class="fa-solid fa-image"></i></div>
+                    <img id="prevImg" src="" alt="" />
+                    <div id="prevBadgeWrap" style="position:absolute;top:9px;left:9px;display:none;">
+                        <span class="tcp-badge-prev" id="prevBadge"></span>
+                    </div>
+                </div>
+                <div class="tcp-body-prev">
+                    <div class="tcp-title-prev" id="prevTitle">@Model?.Title</div>
+                    <div class="tcp-meta-prev">
+                        <span id="prevDays" style="@(Model?.DayCount > 0 ? "" : "display:none")">
+                            <i class="fa-regular fa-calendar-days"></i>
+                            <span id="prevDaysVal">@Model?.DayCount</span> gün
+                        </span>
+                        <span id="prevCap" style="@(Model?.Capacity > 0 ? "" : "display:none")">
+                            <i class="fa-solid fa-users"></i>
+                            <span id="prevCapVal">@Model?.Capacity</span> kişi
+                        </span>
+                    </div>
+                </div>
+                <div class="tcp-price-prev">
+                    <div>
+                        <div style="font-size:10px;color:var(--t3);margin-bottom:1px;">Kişi başı</div>
+                        <div class="tcp-price-val" id="prevPrice">@(Model?.Price > 0 ? "₺" + Model.Price.ToString("N0") : "—")</div>
+                    </div>
+                    <span class="tcp-status @(Model?.Status == true ? "active" : "inactive")" id="prevStatus">
+                        <span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                        @(Model?.Status == true ? "Aktif" : "Pasif")
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kayit Bilgileri -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(34,197,94,.1);color:#16a34a;"><i class="fa-solid fa-circle-info"></i></div>
+                <div><div class="v-card-title">Kayıt Bilgileri</div><div class="v-card-sub">Bu tura ait meta veriler</div></div>
+            </div>
+            <div class="meta-list">
+                <div class="meta-row">
+                    <span class="meta-key"><i class="fa-solid fa-id-badge"></i> Tur ID</span>
+                    <span class="meta-val" style="font-family:monospace;font-size:11px;color:var(--t3);">@Model?.TourId</span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key"><i class="fa-solid fa-calendar-check"></i> Rezervasyonlar</span>
+                    <span class="meta-val">
+                        <span style="background:rgba(2,132,199,.1);color:var(--accent);padding:2px 10px;border-radius:20px;font-size:12px;">
+                            @(ViewBag.ReservationCount ?? 0) Adet
+                        </span>
+                    </span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key"><i class="fa-regular fa-star"></i> Ortalama Puan</span>
+                    <span class="meta-val" style="color:#f59e0b;">
+                        @(ViewBag.AvgRating != null ? "⭐ " + string.Format("{0:F1}", ViewBag.AvgRating) : "—")
+                    </span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key"><i class="fa-regular fa-calendar"></i> Oluşturulma</span>
+                    <span class="meta-val" style="font-size:12px;"> @Model?.CreatedDate.ToString("dd MMM yyyy")</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kontrol Listesi -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-list-check"></i></div>
+                <div><div class="v-card-title">Kontrol Listesi</div><div class="v-card-sub">Zorunlu alanların durumu</div></div>
+            </div>
+            <div style="padding:14px 20px;display:flex;flex-direction:column;gap:9px;">
+                @{
+                    var chkItems = new (string Id, string Label, bool Done)[] {
+                        ("chk-title", "Tur Başlığı",  !string.IsNullOrEmpty(Model?.Title)),
+                        ("chk-desc",  "Açıklama",     !string.IsNullOrEmpty(Model?.Description)),
+                        ("chk-cat",   "Kategori",     !string.IsNullOrEmpty(Model?.CategoryId)),
+                        ("chk-days",  "Gün Sayısı",   Model?.DayCount > 0),
+                        ("chk-cap",   "Kapasite",     Model?.Capacity > 0),
+                        ("chk-price", "Fiyat",        Model?.Price > 0),
+                    };
+                }
+                @foreach (var c in chkItems)
+                {
+                    <div class="checklist-item @(c.Done ? "done" : "")" id="@c.Id">
+                        <i class="@(c.Done ? "fa-solid fa-circle-check" : "fa-regular fa-circle")"
+                           style="font-size:13px;color:@(c.Done ? "#16a34a" : "var(--t3)");"></i>
+                        <span style="font-size:13px;color:var(--t2);">@c.Label</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Tehlikeli Alan -->
+        <div class="v-card" style="border-color:rgba(239,68,68,.18);">
+            <div class="v-card-header" style="border-color:rgba(239,68,68,.1);">
+                <div class="v-card-icon" style="background:rgba(239,68,68,.08);color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div><div class="v-card-title" style="color:#dc2626;">Tehlikeli Alan</div><div class="v-card-sub">Bu işlemler geri alınamaz</div></div>
+            </div>
+            <div class="danger-zone">
+                <p>Bu turu sildiğinizde tüm rezervasyon ve yorumlarıyla birlikte <strong>kalıcı olarak kaldırılır.</strong></p>
+                <form asp-action="DeleteTour" asp-controller="Tour" asp-route-id="@Model?.TourId" method="post" id="deleteForm">
+                    @Html.AntiForgeryToken()
+                    <button type="button" onclick="confirmDelete()"
+                            class="btn btn-danger-soft" style="width:100%;justify-content:center;">
+                        <i class="fa-solid fa-trash"></i> Turu Kalıcı Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+    (function () {
+        var s = document.querySelector('[data-valmsg-summary]');
+        if (s && s.querySelectorAll('li').length > 0) s.style.display = 'flex';
+    })();
+
+    var orig = {
+        title  : document.getElementById('tourTitle').value,
+        desc   : document.getElementById('tourDesc').value,
+        cat    : (document.getElementById('tourCat') || {}).value || '',
+        days   : document.getElementById('tourDays').value,
+        cap    : document.getElementById('tourCapacity').value,
+        price  : document.getElementById('tourPrice').value,
+        cover  : document.getElementById('coverUrlInput').value,
+        status : document.getElementById('Status').checked,
+        badge  : (document.querySelector('input[name="Badge"]:checked') || {}).value || ''
+    };
+
+    var badgeStyles = {
+        'Yeni'   : { bg:'rgba(34,197,94,.15)',  color:'#16a34a', icon:'fa-star' },
+        'Populer': { bg:'rgba(239,68,68,.12)',  color:'#dc2626', icon:'fa-fire' },
+        'Indirim': { bg:'rgba(245,158,11,.15)', color:'#b45309', icon:'fa-percent' },
+        'Ozel'   : { bg:'rgba(139,92,246,.12)', color:'#7c3aed', icon:'fa-gem' }
+    };
+
+    // Normalize badge value for lookup (remove special chars)
+    function normBadge(v) {
+        return (v || '').replace(/[üÜöÖ]/g, function(c){ return ({u:'u',U:'U',o:'o',O:'O'})[c]||c; });
+    }
+
+    function refreshPreview() {
+        var title  = document.getElementById('tourTitle').value.trim();
+        var days   = parseInt(document.getElementById('tourDays').value) || 0;
+        var cap    = parseInt(document.getElementById('tourCapacity').value) || 0;
+        var price  = parseFloat(document.getElementById('tourPrice').value) || 0;
+        var active = document.getElementById('Status').checked;
+        var badgeEl = document.querySelector('input[name="Badge"]:checked');
+        var badge   = badgeEl ? badgeEl.value : '';
+        var badgeKey = normBadge(badge);
+
+        document.getElementById('prevTitle').textContent = title || '—';
+        document.getElementById('pageTitle').textContent = title || '—';
+
+        var pDays = document.getElementById('prevDays');
+        if (days > 0) { pDays.style.display = 'flex'; document.getElementById('prevDaysVal').textContent = days; }
+        else pDays.style.display = 'none';
+
+        var pCap = document.getElementById('prevCap');
+        if (cap > 0) { pCap.style.display = 'flex'; document.getElementById('prevCapVal').textContent = cap; }
+        else pCap.style.display = 'none';
+
+        document.getElementById('prevPrice').textContent = price > 0
+            ? new Intl.NumberFormat('tr-TR',{style:'currency',currency:'TRY',minimumFractionDigits:0}).format(price)
+            : '—';
+
+        var ps = document.getElementById('prevStatus');
+        ps.className = 'tcp-status ' + (active ? 'active' : 'inactive');
+        ps.innerHTML = '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;"></span> ' + (active ? 'Aktif' : 'Pasif');
+
+        var bWrap = document.getElementById('prevBadgeWrap');
+        var bEl   = document.getElementById('prevBadge');
+        if (badge && badgeStyles[badgeKey]) {
+            var st = badgeStyles[badgeKey];
+            bWrap.style.display = 'block';
+            bEl.style.cssText   = 'background:' + st.bg + ';color:' + st.color + ';';
+            bEl.innerHTML = '<i class="fa-solid ' + st.icon + '" style="font-size:9px;margin-right:3px;"></i>' + badge;
+        } else {
+            bWrap.style.display = 'none';
+        }
+
+        setCheck('chk-title', !!title);
+        setCheck('chk-desc',  !!document.getElementById('tourDesc').value.trim());
+        setCheck('chk-cat',   !!(document.getElementById('tourCat') || {}).value);
+        setCheck('chk-days',  days > 0);
+        setCheck('chk-cap',   cap > 0);
+        setCheck('chk-price', price > 0);
+
+        var dirty =
+            document.getElementById('tourTitle').value    !== orig.title  ||
+            document.getElementById('tourDesc').value     !== orig.desc   ||
+            ((document.getElementById('tourCat')||{}).value||'') !== orig.cat ||
+            document.getElementById('tourDays').value     !== orig.days   ||
+            document.getElementById('tourCapacity').value !== orig.cap    ||
+            document.getElementById('tourPrice').value    !== orig.price  ||
+            document.getElementById('coverUrlInput').value!== orig.cover  ||
+            document.getElementById('Status').checked     !== orig.status ||
+            badge !== orig.badge;
+
+        document.getElementById('changeAlert').classList.toggle('visible', dirty);
+    }
+
+    function setCheck(id, done) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.toggle('done', done);
+        var ic = el.querySelector('i');
+        ic.className  = done ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle';
+        ic.style.color = done ? '#16a34a' : 'var(--t3)';
+    }
+
+    var coverEl      = document.getElementById('coverUrlInput');
+    var coverPreview = document.getElementById('coverPreviewImg');
+    var prevImg      = document.getElementById('prevImg');
+    var prevImgPh    = document.getElementById('prevImgPh');
+
+    function loadCover(url) {
+        if (!url) {
+            coverPreview.classList.remove('visible');
+            prevImg.style.display = 'none';
+            prevImgPh.style.display = 'flex';
+            return;
+        }
+        var t = new Image();
+        t.onload = function() {
+            coverPreview.src = url; coverPreview.classList.add('visible');
+            prevImg.src = url; prevImg.style.display = 'block';
+            prevImgPh.style.display = 'none';
+        };
+        t.onerror = function() {
+            coverPreview.classList.remove('visible');
+            prevImg.style.display = 'none';
+            prevImgPh.style.display = 'flex';
+        };
+        t.src = url;
+    }
+
+    if (coverEl.value.trim()) loadCover(coverEl.value.trim());
+
+    var imgTimer;
+    coverEl.addEventListener('input', function() {
+        clearTimeout(imgTimer);
+        var v = this.value.trim();
+        imgTimer = setTimeout(function(){ loadCover(v); }, 500);
+        refreshPreview();
+    });
+
+    ['tourTitle','tourDesc','tourDays','tourCapacity','tourPrice'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', refreshPreview);
+    });
+
+    var catEl = document.getElementById('tourCat');
+    if (catEl) catEl.addEventListener('change', refreshPreview);
+    document.getElementById('Status').addEventListener('change', refreshPreview);
+    document.querySelectorAll('input[name="Badge"]').forEach(function(r){ r.addEventListener('change', refreshPreview); });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (document.getElementById('changeAlert').classList.contains('visible')) {
+            e.preventDefault(); e.returnValue = '';
+        }
+    });
+
+    document.getElementById('editTourForm').addEventListener('submit', function() {
+        document.getElementById('changeAlert').classList.remove('visible');
+    });
+
+    var tourTitleForDelete = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model?.Title ?? ""));
+
+    function confirmDelete() {
+        if (confirm(tourTitleForDelete + ' turunu kalıcı olarak silmek istediğinize emin misiniz?')) {
+            document.getElementById('deleteForm').submit();
+        }
+    }
+
+    refreshPreview();
+    </script>
+}

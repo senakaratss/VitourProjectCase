@@ -1,0 +1,42 @@
+﻿@model List<KpiCardDto>
+
+<div class="kpi-grid">
+    @foreach(var item in Model)
+    {
+        string icon = "";
+        string color = "";
+
+        switch (item.Title)
+        {
+            case "Toplam Gelir":
+                icon = "fa-turkish-lira-sign";
+                color = "blue";
+                break;
+
+            case "Toplam Rezervasyon":
+                icon = "fa-calendar-check";
+                color = "green";
+                break;
+
+            case "Toplam Kişi":
+                icon = "fa-users";
+                color = "amber";
+                break;
+            case "Ortalama Puan":
+                icon = "fa-star-half-stroke";
+                color = "purple";
+                break;
+        }
+    
+    <div class="kpi-card @color">
+        <div class="kpi-top">
+            <div class="kpi-icon" style="background:rgba(2,132,199,.1);color:@color;"><i class="fa-solid @icon"></i></div>
+                <span class="kpi-trend @(item.IsIncrease ? "up" : "down")">
+                    <i class="fa-solid @(item.IsIncrease ? "fa-arrow-up" : "fa-arrow-down")"></i> @item.PercentageChange%</span>
+        </div>
+        <div class="kpi-val">@item.Value</div>
+        <div class="kpi-lbl">@item.Title</div>
+        <div class="kpi-sub">Önceki dönem: <b>@item.PreviousValue</b></div>
+    </div>
+    }
+</div>

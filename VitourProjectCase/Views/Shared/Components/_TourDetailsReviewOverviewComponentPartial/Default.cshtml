@@ -1,0 +1,96 @@
+﻿@model ReviewSummaryDto
+<div class="custom-review mb-80">
+    <h4 class="title-review mb-37">Misafir Yorumları</h4>
+    <div class="flex card-list">
+        <div class="card-review">
+            <div class="percent">
+                <svg>
+                    <circle cx="105" cy="105" r="100"></circle>
+                    <circle cx="105" cy="105" r="100"
+                            style="--percent: @((Model.AverageScore * 20).ToString(System.Globalization.CultureInfo.InvariantCulture))"></circle>
+                </svg>
+                <div class="number center">
+                    <span>Genel Puan</span>
+                    <h5 class="number-reating">@Model.AverageScore.ToString("F1")</h5>
+                    <span>5 Üzerinden</span>
+                </div>
+            </div>
+        </div>
+        <div class="review-list">
+
+            <div class="review-list-item mb-40">
+                <div class="flex-two">
+                    <span class="comfort">Rehber</span>
+                    <div class="start">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="icon-Star @(i <= Model.GuideScore ? "star-filled" : "star-empty")"></i>
+                        }
+                        <span>@(((double)Model.GuideScore).ToString("F1"))</span>
+                    </div>
+                </div>
+                <div class="progress" role="progressbar" aria-label="example" aria-valuenow="@Model.GuideScore" aria-valuemin="0" aria-valuemax="5">
+                    <div class="progress-bar" style="width:@( (Model.GuideScore * 20).ToString(System.Globalization.CultureInfo.InvariantCulture) )%"></div>
+                </div>
+            </div>
+
+            <div class="review-list-item mb-40">
+                <div class="flex-two">
+                    <span class="comfort">Ulaşım</span>
+                    <div class="start">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="icon-Star @(i <= Model.TransportationScore ? "star-filled" : "star-empty")"></i>
+                        }
+                        <span>@(((double)Model.TransportationScore).ToString("F1"))</span>
+                    </div>
+                </div>
+                <div class="progress" role="progressbar" aria-label="example" aria-valuenow="@Model.TransportationScore" aria-valuemin="0" aria-valuemax="5">
+                    <div class="progress-bar" style="width: @(Model.TransportationScore * 20)%"></div>
+                </div>
+            </div>
+
+            <div class="review-list-item mb-40">
+                <div class="flex-two">
+                    <span class="comfort">Konaklama</span>
+                    <div class="start">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="icon-Star @(i <= Model.AccommodationScore ? "star-filled" : "star-empty")"></i>
+                        }
+                        <span>@(((double)Model.AccommodationScore).ToString("F1"))</span>
+                    </div>
+                </div>
+                <div class="progress" role="progressbar" aria-label="example" aria-valuenow="@Model.AccommodationScore" aria-valuemin="0" aria-valuemax="5">
+                    <div class="progress-bar" style="width:@( (Model.AccommodationScore * 20).ToString(System.Globalization.CultureInfo.InvariantCulture) )%"></div>
+                </div>
+            </div>
+
+            <div class="review-list-item mb-40">
+                <div class="flex-two">
+                    <span class="comfort">Fiyat</span>
+                    <div class="start">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="icon-Star @(i <= Model.ValueForMoneyScore ? "star-filled" : "star-empty")"></i>
+                        }
+                        <span>@(((double)Model.ValueForMoneyScore).ToString("F1"))</span>
+                    </div>
+                </div>
+                <div class="progress" role="progressbar" aria-label="example" aria-valuenow="@Model.ValueForMoneyScore" aria-valuemin="0" aria-valuemax="5">
+                    <div class="progress-bar" style="width:@( (Model.ValueForMoneyScore * 20).ToString(System.Globalization.CultureInfo.InvariantCulture) )%"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<style>
+    .star-filled {
+        color: #f5a623;
+    }
+
+    .star-empty {
+        color: #ccc;
+    }
+</style>

@@ -1,0 +1,1418 @@
+﻿@model List<ResultTourPlanByTourIdDto>
+
+@{
+    var tourName = ViewBag.TourName as string ?? "Tur";
+    var tourId = ViewBag.TourId as string ?? "";
+    var dayCount = ViewBag.TourDayCount as int? ?? 0;
+
+    ViewData["Title"] = tourName + " - Tur Planları";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turlar";
+    ViewData["Breadcrumb"] = "Turlar / " + tourName + " / Planlar";
+
+    var dayColors = new[] {
+        "#0284c7","#16a34a","#a855f7","#f59e0b","#ef4444",
+        "#0891b2","#7c3aed","#059669","#dc2626","#d97706"
+    };
+
+    string DayColor(int d) => dayColors[(d - 1) % dayColors.Length];
+}
+
+<style>
+    /* ── Tur özet bar ─────────────────────────────────────────── */
+    .tour-bar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px 20px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .tour-thumb {
+        width: 56px;
+        height: 44px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: linear-gradient(135deg,#e0f2fe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #93c5fd;
+        font-size: 20px;
+        overflow: hidden;
+    }
+
+        .tour-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .tour-bar-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .tour-bar-meta {
+        font-size: 12px;
+        color: var(--t3);
+        margin-top: 3px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+        .tour-bar-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+    /* stat chips */
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit,minmax(140px,1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .stat-chip {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: transform .18s,box-shadow .18s;
+    }
+
+        .stat-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,.09);
+        }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .stat-val {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    /* ── Toolbar ──────────────────────────────────────────────── */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 12px;
+        height: 36px;
+        flex: 1;
+        min-width: 180px;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    /* view toggle */
+    .view-toggle {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .vt-btn {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        transition: background .16s,color .16s;
+    }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .vt-btn:not(.active):hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .btn-icon.edit:hover {
+            background: rgba(2,132,199,.08);
+            border-color: rgba(2,132,199,.3);
+            color: var(--accent);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+    /* ── Toplu işlem ──────────────────────────────────────────── */
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 13px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    /* ══════════════════════════════════════════════════════════
+           ZAMAN ÇİZGİSİ GÖRÜNÜMÜ
+        ══════════════════════════════════════════════════════════ */
+    .timeline {
+        position: relative;
+        padding-left: 48px;
+    }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent), #e2e8f0);
+            border-radius: 99px;
+        }
+
+    .tl-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+        .tl-item:last-child {
+            margin-bottom: 0;
+        }
+
+    /* Nokta */
+    .tl-dot {
+        position: absolute;
+        left: -36px;
+        top: 16px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        font-weight: 800;
+        color: #fff;
+        transition: box-shadow .18s;
+        z-index: 1;
+        flex-shrink: 0;
+    }
+
+    .tl-item:hover .tl-dot {
+        box-shadow: 0 0 0 3px rgba(2,132,199,.25);
+    }
+
+    /* Kart */
+    .tl-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform .18s, box-shadow .18s;
+    }
+
+    .tl-item:hover .tl-card {
+        transform: translateX(4px);
+        box-shadow: 0 6px 24px rgba(0,0,0,.1);
+    }
+
+    .tl-card-header {
+        display: flex;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        gap: 14px;
+    }
+
+    .tl-day-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 9px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .tl-day-num {
+        font-size: 17px;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .tl-day-label {
+        font-size: 8px;
+        font-weight: 700;
+        color: rgba(255,255,255,.8);
+        letter-spacing: .4px;
+        text-transform: uppercase;
+    }
+
+    .tl-title-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tl-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .tl-id {
+        font-size: 10.5px;
+        color: var(--t3);
+        margin-top: 2px;
+        font-family: monospace;
+    }
+
+    .tl-actions {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .tl-card-body {
+        padding: 14px 18px;
+    }
+
+    .tl-desc {
+        font-size: 13px;
+        color: var(--t2);
+        line-height: 1.65;
+        white-space: pre-wrap;
+    }
+
+    .tl-card-footer {
+        padding: 9px 18px;
+        border-top: 1px solid var(--border);
+        background: #f8fafc;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+           KART GRID GÖRÜNÜMÜ
+        ══════════════════════════════════════════════════════════ */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+
+    .plan-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform .18s, box-shadow .18s;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+        .plan-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(0,0,0,.11);
+        }
+
+    .plan-card-top {
+        height: 6px;
+        flex-shrink: 0;
+    }
+
+    .plan-card-header {
+        padding: 14px 16px 10px;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .pc-badge {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .pc-day-num {
+        font-size: 18px;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+    }
+
+    .pc-day-label {
+        font-size: 8px;
+        font-weight: 700;
+        color: rgba(255,255,255,.8);
+        text-transform: uppercase;
+        letter-spacing: .4px;
+    }
+
+    .pc-cb {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .pc-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+        line-height: 1.35;
+        flex: 1;
+    }
+
+    .plan-card-body {
+        padding: 0 16px 12px;
+        flex: 1;
+    }
+
+    .pc-desc {
+        font-size: 12.5px;
+        color: var(--t2);
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        white-space: pre-wrap;
+    }
+
+    .plan-card-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+    }
+
+    .pc-meta {
+        font-size: 11.5px;
+        color: var(--t3);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .pc-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+           TABLO GÖRÜNÜMÜ
+        ══════════════════════════════════════════════════════════ */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-header {
+        padding: 13px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        user-select: none;
+        cursor: pointer;
+    }
+
+        th.no-sort {
+            cursor: default;
+        }
+
+        th .si {
+            margin-left: 3px;
+            font-size: 9px;
+            opacity: .4;
+        }
+
+        th.asc .si, th.desc .si {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+    td {
+        padding: 12px 14px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 38px;
+        padding: 12px 6px 12px 14px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .day-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .desc-trunc {
+        max-width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12.5px;
+    }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    /* ── Boş durum ────────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 70px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 44px;
+            margin-bottom: 16px;
+            display: block;
+            opacity: .3;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+    /* ── Kapsam uyarısı ───────────────────────────────────────── */
+    .coverage-bar {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 16px;
+        background: rgba(245,158,11,.07);
+        border: 1px solid rgba(245,158,11,.2);
+        border-radius: var(--radius-sm);
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+    }
+
+        .coverage-bar i {
+            color: #f59e0b;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .coverage-bar p {
+            font-size: 12.5px;
+            color: #92400e;
+            flex: 1;
+        }
+
+        .coverage-bar strong {
+            color: #78350f;
+        }
+
+    .prog-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .prog-bar {
+        flex: 1;
+        height: 7px;
+        background: #fde68a;
+        border-radius: 99px;
+        min-width: 80px;
+        overflow: hidden;
+    }
+
+    .prog-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: #f59e0b;
+        transition: width .5s ease;
+    }
+
+    .prog-pct {
+        font-size: 12px;
+        font-weight: 700;
+        color: #b45309;
+        white-space: nowrap;
+    }
+
+    /* Sayfalama */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--t3);
+    }
+
+    .pagination-btns {
+        display: flex;
+        gap: 4px;
+    }
+
+    .pg-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .pg-btn:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .pg-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .pg-btn:disabled {
+            opacity: .3;
+            cursor: default;
+        }
+
+    @@media (max-width:768px) {
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+
+        .timeline {
+            padding-left: 36px;
+        }
+
+        .tl-dot {
+            left: -28px;
+        }
+
+        .timeline::before {
+            left: 14px;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <a href="/Tour/UpdateTour/@tourId" class="btn btn-ghost" style="height:38px;padding:0 14px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Tur Planları</h1>
+            <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+                <strong style="color:var(--t2);">@tourName</strong> turuna ait günlük program
+            </p>
+        </div>
+    </div>
+    <a href="/TourPlan/CreateTourPlan/@tourId" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Yeni Plan Ekle
+    </a>
+</div>
+
+<!-- ── Tur Özet Barı ─────────────────────────────────────────── -->
+<div class="tour-bar">
+    <div class="tour-thumb">
+        @if (!string.IsNullOrEmpty(ViewBag.TourCoverImage as string))
+        {
+            <img src="@ViewBag.TourCoverImage" alt="@tourName"
+                 onerror="this.parentElement.innerHTML='<i class=\'fa-solid fa-image\'></i>'" />
+        }
+        else
+        {
+            <i class="fa-solid fa-image"></i>
+        }
+    </div>
+    <div style="flex:1;min-width:140px;">
+        <div class="tour-bar-name">@tourName</div>
+        <div class="tour-bar-meta">
+            @if (dayCount > 0)
+            {
+                <span><i class="fa-regular fa-calendar-days"></i> @dayCount günlük tur</span>
+            }
+            @if (ViewBag.TourPrice != null)
+            {
+                <span><i class="fa-solid fa-tag"></i> ₺@string.Format("{0:N0}", ViewBag.TourPrice)</span>
+            }
+        </div>
+    </div>
+    <a href="/Tour/UpdateTour/@tourId" class="btn btn-ghost" style="height:34px;font-size:12px;">
+        <i class="fa-solid fa-pen"></i> Turu Düzenle
+    </a>
+</div>
+
+<!-- ── Stat chips ─────────────────────────────────────────────── -->
+<div class="stat-row">
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(2,132,199,.1);color:var(--accent);">
+            <i class="fa-solid fa-route"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count ?? 0)</div>
+            <div class="stat-label">Toplam Plan</div>
+        </div>
+    </div>
+
+    @if (dayCount > 0)
+    {
+        var coverage = Model != null && Model.Any()
+        ? (int)Math.Round(Model.Select(p => p.DayNumber).Distinct().Count() * 100.0 / dayCount)
+        : 0;
+        <div class="stat-chip">
+            <div class="stat-icon" style="background:rgba(34,197,94,.1);color:#16a34a;">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <div class="stat-val">@coverage<span style="font-size:14px;font-weight:600;">%</span></div>
+                <div class="stat-label">Kapsam</div>
+            </div>
+        </div>
+    }
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(168,85,247,.1);color:#a855f7;">
+            <i class="fa-solid fa-calendar-day"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(dayCount > 0 ? dayCount : "—")</div>
+            <div class="stat-label">Tur Süresi</div>
+        </div>
+    </div>
+
+    @{
+        var missingDays = new List<int>();
+        if (dayCount > 0 && Model != null)
+        {
+            var existing = Model.Select(p => p.DayNumber).ToHashSet();
+            missingDays = Enumerable.Range(1, dayCount).Where(d => !existing.Contains(d)).ToList();
+        }
+    }
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <div class="stat-val">@missingDays.Count</div>
+            <div class="stat-label">Eksik Gün</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Kapsam Uyarısı ────────────────────────────────────────── -->
+@if (missingDays.Any() && dayCount > 0)
+{
+    var pct = Model != null && Model.Any()
+        ? (int)Math.Round(Model.Select(p => p.DayNumber).Distinct().Count() * 100.0 / dayCount)
+        : 0;
+    <div class="coverage-bar">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p>
+            <strong>@missingDays.Count gün için plan eksik:</strong>
+            Gün @string.Join(", ", missingDays.Take(8))@(missingDays.Count > 8 ? "…" : "")
+        </p>
+        <div class="prog-wrap">
+            <div class="prog-bar">
+                <div class="prog-fill" style="width:@pct%;"></div>
+            </div>
+            <span class="prog-pct">@pct%</span>
+        </div>
+    </div>
+}
+
+<!-- ── Toplu İşlem ───────────────────────────────────────────── -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> plan seçildi</span>
+    <button class="btn-bulk-danger" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash"></i> Seçilenleri Sil
+    </button>
+    <button class="btn-ghost" style="height:32px;font-size:12px;" onclick="clearSel()">
+        <i class="fa-solid fa-xmark"></i> İptal
+    </button>
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Başlık veya açıklamada ara…" />
+    </div>
+
+    <span style="font-size:12px;color:var(--t3);margin-left:auto;white-space:nowrap;">
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> plan
+    </span>
+
+    <div class="view-toggle">
+        <button class="vt-btn active" id="btnTimeline" onclick="setView('timeline')" title="Zaman Çizelgesi">
+            <i class="fa-solid fa-timeline"></i>
+        </button>
+        <button class="vt-btn" id="btnCards" onclick="setView('cards')" title="Kart Görünümü">
+            <i class="fa-solid fa-grip"></i>
+        </button>
+        <button class="vt-btn" id="btnTable" onclick="setView('table')" title="Tablo Görünümü">
+            <i class="fa-solid fa-table-list"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══ ZAMANÇİZGİSİ ════════════════════════════════════════════ -->
+<div id="timelineView">
+    @if (Model != null && Model.Any())
+    {
+        <div class="timeline" id="tlContainer">
+            @foreach (var plan in Model.OrderBy(p => p.DayNumber))
+            {
+                var col = DayColor(plan.DayNumber);
+                var lineCount = plan.Description?.Split('\n').Count(l => l.Trim().Length > 0) ?? 0;
+                <div class="tl-item plan-item"
+                     data-title="@plan.Title.ToLower()"
+                     data-desc="@plan.Description?.ToLower()"
+                     data-day="@plan.DayNumber">
+
+                    <div class="tl-dot" style="background:@col;">@plan.DayNumber</div>
+
+                    <div class="tl-card">
+                        <div class="tl-card-header">
+                            <div class="tl-day-badge" style="background:@col;">
+                                <div class="tl-day-num">@plan.DayNumber</div>
+                                <div class="tl-day-label">GÜN</div>
+                            </div>
+                            <div class="tl-title-wrap">
+                                <div class="tl-title">@plan.Title</div>
+                                <div class="tl-id">@plan.TourPlanId</div>
+                            </div>
+                            <div class="tl-actions">
+                                <input type="checkbox" class="row-cb" value="@plan.TourPlanId"
+                                       style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;" />
+                                <a href="/TourPlan/UpdateTourPlan/@plan.TourPlanId"
+                                   class="btn-icon edit" title="Düzenle">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+                                <form asp-action="DeleteTourPlan" asp-controller="TourPlan"
+                                      asp-route-id="@plan.TourPlanId" asp-route-tourId="@plan.TourId" method="post"
+                                      style="display:inline;" id="del-@plan.TourPlanId">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon danger" title="Sil"
+                                            onclick="return confirm('Bu planı silmek istediğinize emin misiniz?')">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(plan.Description))
+                        {
+                            <div class="tl-card-body">
+                                <div class="tl-desc">@plan.Description</div>
+                            </div>
+                        }
+
+                        <div class="tl-card-footer" style="border-top-color:@col + '22';">
+                            <i class="fa-regular fa-clock" style="color:@col;"></i>
+                            <span>@lineCount aktivite satırı</span>
+                            <span style="margin-left:auto;font-family:monospace;font-size:10.5px;">@plan.TourPlanId</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+            <i class="fa-solid fa-route"></i>
+            <h3>Henüz plan eklenmemiş</h3>
+            <p>Bu tura ait günlük program bulunmuyor.</p>
+            <a href="/TourPlan/CreateTourPlan/@tourId" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> İlk Planı Ekle
+            </a>
+        </div>
+    }
+</div>
+
+<!-- ══ KART GRID ════════════════════════════════════════════════ -->
+<div id="cardsView" style="display:none;">
+    @if (Model != null && Model.Any())
+    {
+        <div class="cards-grid" id="cardsGrid">
+            @foreach (var plan in Model.OrderBy(p => p.DayNumber))
+            {
+                var col = DayColor(plan.DayNumber);
+                var lineCount = plan.Description?.Split('\n').Count(l => l.Trim().Length > 0) ?? 0;
+                <div class="plan-card plan-item"
+                     data-title="@plan.Title.ToLower()"
+                     data-desc="@plan.Description?.ToLower()"
+                     data-day="@plan.DayNumber">
+
+                    <div class="plan-card-top" style="background:@col;"></div>
+                    <input type="checkbox" class="pc-cb row-cb" value="@plan.TourPlanId" />
+
+                    <div class="plan-card-header">
+                        <div class="pc-badge" style="background:@col;">
+                            <div class="pc-day-num">@plan.DayNumber</div>
+                            <div class="pc-day-label">GÜN</div>
+                        </div>
+                        <div class="pc-title">@plan.Title</div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(plan.Description))
+                    {
+                        <div class="plan-card-body">
+                            <div class="pc-desc">@plan.Description</div>
+                        </div>
+                    }
+
+                    <div class="plan-card-footer">
+                        <div class="pc-meta">
+                            <i class="fa-regular fa-clock" style="color:@col;"></i>
+                            @lineCount satır
+                        </div>
+                        <div class="pc-actions">
+                            <a href="/admin/turlar/@tourId/plan/duzenle/@plan.TourPlanId"
+                               class="btn-icon edit" title="Düzenle">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <form asp-action="DeletePlan" asp-controller="TourPlan"
+                                  asp-route-id="@plan.TourPlanId" method="post"
+                                  style="display:inline;" id="del-c-@plan.TourPlanId">
+                                @Html.AntiForgeryToken()
+                                <button type="button" class="btn-icon danger" title="Sil"
+                                        onclick="confirmDel('@plan.TourPlanId', @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(plan.Title)), 'c')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+            <i class="fa-solid fa-route"></i>
+            <h3>Henüz plan eklenmemiş</h3>
+            <p>Bu tura ait günlük program bulunmuyor.</p>
+            <a href="/admin/turlar/@tourId/plan/yeni" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> İlk Planı Ekle
+            </a>
+        </div>
+    }
+</div>
+
+<!-- ══ TABLO ════════════════════════════════════════════════════ -->
+<div id="tableView" style="display:none;">
+    <div class="table-card">
+        <div class="table-card-header">
+            <div>
+                <span style="font-size:14px;font-weight:700;color:var(--t1);">Plan Listesi</span>
+                <span style="font-size:12px;color:var(--t3);margin-left:8px;">@(Model?.Count ?? 0) kayıt</span>
+            </div>
+            <button class="btn-icon" title="Yenile" onclick="location.reload()" style="width:32px;height:32px;">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+        <div class="tbl-wrap">
+            <table id="planTable">
+                <thead>
+                    <tr>
+                        <th class="cb-cell no-sort">
+                            <input type="checkbox" id="selectAll" />
+                        </th>
+                        <th data-col="day">Gün <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="title">Başlık <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="desc" class="hide-sm">Açıklama <i class="fa-solid fa-sort si"></i></th>
+                        <th class="no-sort" style="text-align:right;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var plan in Model.OrderBy(p => p.DayNumber))
+                        {
+                            var col = DayColor(plan.DayNumber);
+                            <tr class="plan-row"
+                                data-title="@plan.Title.ToLower()"
+                                data-desc="@plan.Description?.ToLower()"
+                                data-day="@plan.DayNumber">
+                                <td class="cb-cell">
+                                    <input type="checkbox" class="row-cb" value="@plan.TourPlanId" />
+                                </td>
+                                <td>
+                                    <span class="day-pill" style="background:@col;">
+                                        <i class="fa-solid fa-calendar-day" style="font-size:9px;"></i>
+                                        @plan.DayNumber. Gün
+                                    </span>
+                                </td>
+                                <td style="font-size:13px;font-weight:600;color:var(--t1);">@plan.Title</td>
+                                <td class="hide-sm">
+                                    <div class="desc-trunc" title="@plan.Description">@plan.Description</div>
+                                </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="/admin/turlar/@tourId/plan/duzenle/@plan.TourPlanId"
+                                           class="btn-icon edit" title="Düzenle">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <form asp-action="DeletePlan" asp-controller="TourPlan"
+                                              asp-route-id="@plan.TourPlanId" method="post"
+                                              style="display:inline;" id="del-t-@plan.TourPlanId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" class="btn-icon danger" title="Sil"
+                                                    onclick="confirmDel('@plan.TourPlanId', @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(plan.Title)), 't')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-route"></i>
+                                    <h3>Henüz plan eklenmemiş</h3>
+                                    <p>Bu tura ait günlük program bulunmuyor.</p>
+                                    <a href="/admin/turlar/@tourId/plan/yeni" class="btn btn-primary">
+                                        <i class="fa-solid fa-plus"></i> İlk Planı Ekle
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" style="display:none;">
+            <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı bir arama terimi deneyin.</p>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <span class="pagination-info">Toplam <strong>@(Model?.Count ?? 0)</strong> kayıt</span>
+            <div class="pagination-btns">
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+                <button class="pg-btn active">1</button>
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* ── Görünüm ── */
+        var views = { timeline:'timelineView', cards:'cardsView', table:'tableView' };
+        var btns  = { timeline:'btnTimeline', cards:'btnCards', table:'btnTable' };
+
+        function setView(v) {
+            Object.keys(views).forEach(function(k) {
+                document.getElementById(views[k]).style.display = k === v ? 'block' : 'none';
+                document.getElementById(btns[k]).classList.toggle('active', k === v);
+            });
+            localStorage.setItem('tourPlanView', v);
+            applyFilter();
+        }
+
+        (function() {
+            var saved = localStorage.getItem('tourPlanView');
+            if (saved && views[saved]) setView(saved);
+        })();
+
+        /* ── Filtre ── */
+        var searchInput  = document.getElementById('searchInput');
+        var visibleCount = document.getElementById('visibleCount');
+        var noResults    = document.getElementById('noResults');
+
+        function applyFilter() {
+            var q = searchInput.value.toLowerCase().trim();
+            var cnt = 0;
+
+            document.querySelectorAll('.plan-item').forEach(function(el) {
+                var show = !q || el.dataset.title.includes(q) || (el.dataset.desc || '').includes(q);
+                el.style.display = show ? '' : 'none';
+                if (show) cnt++;
+            });
+
+            document.querySelectorAll('.plan-row').forEach(function(r) {
+                var show = !q || r.dataset.title.includes(q) || (r.dataset.desc || '').includes(q);
+                r.style.display = show ? '' : 'none';
+            });
+
+            visibleCount.textContent = cnt;
+            if (noResults) noResults.style.display = cnt === 0 ? 'block' : 'none';
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+
+        /* ── Tablo sıralama ── */
+        document.querySelectorAll('th[data-col]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = this.dataset.col;
+                var asc = !this.classList.contains('asc');
+                document.querySelectorAll('th[data-col]').forEach(function(t) {
+                    t.classList.remove('asc','desc');
+                    t.querySelector('.si').className = 'fa-solid fa-sort si';
+                });
+                this.classList.add(asc ? 'asc' : 'desc');
+                this.querySelector('.si').className = 'fa-solid fa-sort-' + (asc ? 'up' : 'down') + ' si';
+
+                var tbody = document.getElementById('tableBody');
+                var rows  = Array.from(tbody.querySelectorAll('.plan-row'));
+                rows.sort(function(a, b) {
+                    if (col === 'day') {
+                        return asc
+                            ? parseInt(a.dataset.day) - parseInt(b.dataset.day)
+                            : parseInt(b.dataset.day) - parseInt(a.dataset.day);
+                    }
+                    var va = col === 'title' ? a.dataset.title : (a.dataset.desc || '');
+                    var vb = col === 'title' ? b.dataset.title : (b.dataset.desc || '');
+                    return asc ? va.localeCompare(vb,'tr') : vb.localeCompare(va,'tr');
+                });
+                rows.forEach(function(r){ tbody.appendChild(r); });
+            });
+        });
+
+        /* ── Checkbox ── */
+        var bulkBar   = document.getElementById('bulkBar');
+        var bulkCount = document.getElementById('bulkCount');
+        var selectAll = document.getElementById('selectAll');
+
+        function updateBulk() {
+            var checked = document.querySelectorAll('.row-cb:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            if (selectAll) {
+                var all = document.querySelectorAll('.row-cb');
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = selectAll.checked; });
+                updateBulk();
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.row-cb')) updateBulk();
+        });
+
+        function clearSel() {
+            document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = false; });
+            if (selectAll) selectAll.checked = false;
+            updateBulk();
+        }
+
+        function bulkDelete() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c){ return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' planı kalıcı olarak silmek istediğinize emin misiniz?')) return;
+            console.log('Silinecek:', ids); // TODO: AJAX
+        }
+
+               function confirmDel(id, title) {
+
+            if (!confirm('"' + title + '" planını silmek istediğinize emin misiniz?'))
+                return;
+
+            var form = document.getElementById("del-" + id);
+
+            if (form) {
+                form.submit();
+            }
+        }
+    </script>
+}

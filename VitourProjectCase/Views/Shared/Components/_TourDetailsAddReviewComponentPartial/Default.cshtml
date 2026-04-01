@@ -1,0 +1,115 @@
+﻿<div class="form-review bg-1">
+    <h4 class="title-review mb-60">Bir Yorum Bırak</h4>
+    <div class="inner-review flex-one mb-50">
+        <div class="inner-review-item">
+            <span class="text-review">Fiyat*</span>
+            <div class="star-group" data-target="ValueForMoneyScore">
+                <i class="icon-Star star" data-val="1"></i>
+                <i class="icon-Star star" data-val="2"></i>
+                <i class="icon-Star star" data-val="3"></i>
+                <i class="icon-Star star" data-val="4"></i>
+                <i class="icon-Star star" data-val="5"></i>
+            </div>
+        </div>
+        <div class="inner-review-item">
+            <span class="text-review">Rehber*</span>
+            <div class="star-group" data-target="GuideScore">
+                <i class="icon-Star star" data-val="1"></i>
+                <i class="icon-Star star" data-val="2"></i>
+                <i class="icon-Star star" data-val="3"></i>
+                <i class="icon-Star star" data-val="4"></i>
+                <i class="icon-Star star" data-val="5"></i>
+            </div>
+        </div>
+        <div class="inner-review-item">
+            <span class="text-review">Konaklama*</span>
+            <div class="star-group" data-target="AccommodationScore">
+                <i class="icon-Star star" data-val="1"></i>
+                <i class="icon-Star star" data-val="2"></i>
+                <i class="icon-Star star" data-val="3"></i>
+                <i class="icon-Star star" data-val="4"></i>
+                <i class="icon-Star star" data-val="5"></i>
+            </div>
+        </div>
+        <div class="inner-review-item">
+            <span class="text-review">Ulaşım*</span>
+            <div class="star-group" data-target="TransportationScore">
+                <i class="icon-Star star" data-val="1"></i>
+                <i class="icon-Star star" data-val="2"></i>
+                <i class="icon-Star star" data-val="3"></i>
+                <i class="icon-Star star" data-val="4"></i>
+                <i class="icon-Star star" data-val="5"></i>
+            </div>
+        </div>
+    </div>
+    <form asp-action="CreateReview" asp-controller="Review" id="form-review">
+        <div class="row">
+            <input type="hidden" name="TourId" value="@ViewBag.TourId" />
+            <input type="hidden" name="GuideScore" id="GuideScore" value="0" />
+            <input type="hidden" name="TransportationScore" id="TransportationScore" value="0" />
+            <input type="hidden" name="AccommodationScore" id="AccommodationScore" value="0" />
+            <input type="hidden" name="ValueForMoneyScore" id="ValueForMoneyScore" value="0" />
+
+            <div class="col-md-12">
+                <fieldset class="relative input-wrap mb-37">
+                    <i class="icon-user-1-1"></i>
+                    <input type="text" placeholder="Adınız Soyadınız" name="NameSurname">
+                </fieldset>
+            </div>
+            <div class="col-lg-12">
+                <fieldset class="relative input-wrap mb-37">
+                    <i class="icon-content"></i>
+                    <textarea name="Comment" rows="10" cols="50" placeholder="Yorumunuz"></textarea>
+                </fieldset>
+            </div>
+            <div class="cok-lg-12">
+                <button type="submit" class="submit">
+                    Yorum Yap
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.querySelectorAll('.star-group').forEach(function (group) {
+        var stars = group.querySelectorAll('.star');
+        var targetId = group.getAttribute('data-target');
+        var selected = 0;
+
+        function highlight(val) {
+            stars.forEach(function (s) {
+                if (parseInt(s.getAttribute('data-val')) <= val) {
+                    s.classList.add('star-active');
+                } else {
+                    s.classList.remove('star-active');
+                }
+            });
+        }
+
+        stars.forEach(function (star) {
+            star.addEventListener('mouseenter', function () {
+                highlight(parseInt(star.getAttribute('data-val')));
+            });
+            star.addEventListener('mouseleave', function () {
+                highlight(selected);
+            });
+            star.addEventListener('click', function () {
+                selected = parseInt(star.getAttribute('data-val'));
+                highlight(selected);
+                document.getElementById(targetId).value = selected;
+            });
+        });
+    });
+</script>
+
+<style>
+    .star {
+        cursor: pointer;
+        transition: color 0.15s;
+    }
+
+    .star-active {
+        color: #f5a623;
+    }
+</style>

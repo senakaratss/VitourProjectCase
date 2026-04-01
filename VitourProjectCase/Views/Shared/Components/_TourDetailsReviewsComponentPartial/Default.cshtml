@@ -1,0 +1,80 @@
+﻿@model List<ResultReviewByTourIdDto>
+<div class="tab-pane fade" id="pills-reviews" role="tabpanel"
+     aria-labelledby="pills-reviews-tab" tabindex="0">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="review-content-tour">
+                @await Component.InvokeAsync("_TourDetailsReviewOverviewComponentPartial", new { id = ViewBag.TourId })
+                <div class="client-review mb-80">
+                    <div class="flex-two mb-50 inner-header">
+                        <h4 class="title-review">Misafirlerimizin Yorumları</h4>
+                        <div class="client-review flex">
+                            <span>@Model.Count Yorum</span>
+                            <div class="start" style="margin-left:10px;">
+                                @{
+                                    int avgFullStars = (int)Math.Floor(ViewBag.AverageScore);
+                                    int avgEmptyStars = 5 - avgFullStars;
+
+                                    for (int i = 0; i < avgFullStars; i++)
+                                    {
+                                        <i class="icon-Star" style="color:#ffc107"></i>
+                                    }
+                                    for (int i = 0; i < avgEmptyStars; i++)
+                                    {
+                                        <i class="icon-Star" style="color:#ddd"></i>
+                                    }
+                                }
+                                <span>(@ViewBag.AverageScore.ToString("0.0"))</span>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="client-review-list">
+                        @foreach (var item in Model)
+                        {
+                            <div class="client-review-item flex">
+                                <div class="avata">
+                                    <img src="https://images.openai.com/static-rsc-4/y64dkkhvmbFCda6Mra_r4o7l47Rz7HQ7Bq68pnh61GkZZlmJ5rMaJ9rMnYyEiMihllNK1x9kpPkwurKKDc77W7qZmTJ3hBSK4FGmp3j9saLcCR_FbEhoH-_MQOlKsFkiAKwzI3NsgXVkW1Phli0BDjgs-HoZxSGVKO3_9cF_hZ4sCaU4buZFfg1WWwPwCY1M?purpose=fullsize"
+                                         alt="image">
+                                </div>
+                                <div class="content">
+                                    <span class="name">@item.NameSurname</span>
+                                    <p class="des">
+                                        @item.Comment
+                                    </p>
+                                    <div class="start">
+                                        @{
+                                            int fullStars = (int)item.Score;
+                                            int emptyStars = 5 - fullStars;
+
+                                            for (int i = 0; i < fullStars; i++)
+                                            {
+                                                <i class="icon-Star" style="color:#ffc107"></i>
+
+                                            }
+                                            for (int i = 0; i < emptyStars; i++)
+                                            {
+                                                <i class="icon-Star" style="color:#ddd"></i>
+
+                                            }
+                                            <span>@item.Score.ToString("0.0")</span>
+                                        }
+                                    </div>
+                                    <span class="date">@item.ReviewDate.ToString("dd MMM yyyy")</span>
+
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+                @await Component.InvokeAsync("_TourDetailsAddReviewComponentPartial",new{id=ViewBag.TourId})
+            </div>
+
+        </div>
+        @await Component.InvokeAsync("_TourDetailsRightSidebarComponentPartial")
+    </div>
+
+</div>

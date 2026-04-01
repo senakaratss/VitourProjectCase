@@ -1,0 +1,126 @@
+﻿@model TourDetailDto
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+
+@await Component.InvokeAsync("_TourHeadComponentPartial")
+
+
+<body class="body header-fixed ">
+
+    <div class="preload preload-container">
+        <svg class="pl" width="240" height="240" viewBox="0 0 240 240">
+            <circle class="pl__ring pl__ring--a" cx="120" cy="120" r="105" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 660" stroke-dashoffset="-330" stroke-linecap="round"></circle>
+            <circle class="pl__ring pl__ring--b" cx="120" cy="120" r="35" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 220" stroke-dashoffset="-110" stroke-linecap="round"></circle>
+            <circle class="pl__ring pl__ring--c" cx="85" cy="120" r="70" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 440" stroke-linecap="round"></circle>
+            <circle class="pl__ring pl__ring--d" cx="155" cy="120" r="70" fill="none" stroke="#000" stroke-width="20" stroke-dasharray="0 440" stroke-linecap="round"></circle>
+        </svg>
+    </div>
+
+    <!-- /preload -->
+
+    <div id="wrapper">
+        <div id="pagee" class="clearfix">
+            @await Component.InvokeAsync("_TourHeaderComponentPartial")
+
+            <main id="main">
+
+                <section>
+                    <div class="tf-container full">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <img src="@Model.CoverImageUrl" style="height:400px;object-fit:cover" alt="image">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="tour-single">
+                    <div class="tf-container">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <ul class="nav justify-content-between tab-tour-single" id="pills-tab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="pills-information-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-information" type="button" role="tab"
+                                                aria-controls="pills-information" aria-selected="true">
+                                            <i class="icon-Vector-51"></i> Açıklama
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pills-tour-planing-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-tour-planing" type="button" role="tab"
+                                                aria-controls="pills-tour-planing" aria-selected="false">
+                                            <i class="icon-destination-2-1"></i> Tur Planı
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pills-location-share-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-location-share" type="button" role="tab"
+                                                aria-controls="pills-location-share" aria-selected="false">
+                                            <i class="icon-map-1"></i> Rota Konumu
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pills-reviews-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-reviews" type="button" role="tab"
+                                                aria-controls="pills-reviews" aria-selected="false">
+                                            <i class="icon-favourite-1"></i> Yorumlar
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="pills-shot-gallery-tab" data-bs-toggle="pill"
+                                                data-bs-target="#pills-shot-gallery" type="button" role="tab"
+                                                aria-controls="pills-shot-gallery" aria-selected="false">
+                                            <i class="icon-image-gallery-1"></i> Galeri
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row pd-main">
+                            <div class="col-lg-12">
+                                <div class="tab-content" id="pills-tabContent">
+                                    @await Component.InvokeAsync("_TourDetailsInformationComponentPartial",new{id=Model.TourId})
+                                    @await Component.InvokeAsync("_TourDetailsPlanComponentPartial", new { id = Model.TourId })
+                                    @await Component.InvokeAsync("_TourDetailsLocationComponentPartial", new { id = Model.TourId })
+                                    @await Component.InvokeAsync("_TourDetailsReviewsComponentPartial", new { id = Model.TourId })
+                                    @await Component.InvokeAsync("_TourDetailsGalleryComponentPartial", new { id = Model.TourId })
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+            </main>
+
+            @await Component.InvokeAsync("_TourFooterComponentPartial")
+            <!-- Bottom -->
+        </div>
+        <!-- /#page -->
+    </div>
+
+
+
+
+    <!-- Javascript -->
+    <script src="/vitour/app/js/jquery.min.js"></script>
+    <script src="/vitour/app/js/jquery.nice-select.min.js"></script>
+    <script src="/vitour/app/js/bootstrap.min.js"></script>
+    <script src="/vitour/app/js/swiper-bundle.min.js"></script>
+    <script src="/vitour/app/js/swiper.js"></script>
+    <script src="/vitour/app/js/plugin.js"></script>
+    <script src="/vitour/app/js/jquery.fancybox.js"></script>
+    <script src="/vitour/app/js/map.min.js"></script>
+    <script src="/vitour/app/js/map.js"></script>
+    <script src="/vitour/app/js/shortcodes.js"></script>
+    <script src="/vitour/app/js/main.js"></script>
+
+</body>
+
+</html>

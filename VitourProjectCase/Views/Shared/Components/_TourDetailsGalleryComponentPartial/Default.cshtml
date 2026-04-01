@@ -1,0 +1,26 @@
+﻿@model List<ResultGalleryByTourIdDto>
+@{
+    int i = 1;
+}
+<div class="tab-pane fade" id="pills-shot-gallery" role="tabpanel"
+     aria-labelledby="pills-shot-gallery-tab" tabindex="0">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="gallery-content-tour">
+                @foreach(var item in Model)
+                {
+                    <div class="image-gallery@(i) image">
+                        <img src="@item.ImageUrl" alt="image"
+                             class="item1">
+                    </div>
+                    i++;
+                }
+
+              
+            </div>
+
+        </div>
+        @await Component.InvokeAsync("_TourDetailsRightSidebarComponentPartial")
+    </div>
+
+</div>

@@ -1,0 +1,853 @@
+﻿@model CreateTourPlanDto
+
+@{
+    var tourName = ViewBag.TourName as string ?? "Tur";
+    var tourId = ViewBag.TourId as string ?? "";
+
+    ViewData["Title"] = "Tur Planı Ekle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turlar";
+    ViewData["Breadcrumb"] = "Turlar / " + tourName + " / Plan Ekle";
+}
+
+<style>
+    .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ── Kart ─────────────────────────────────────────────────── */
+    .v-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .v-card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .v-card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .v-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .v-card-sub {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-body {
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .form-label .req {
+            color: #ef4444;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+    .form-hint {
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--t1);
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color .18s, box-shadow .18s;
+        outline: none;
+        appearance: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #fff;
+        }
+
+        .form-control::placeholder {
+            color: var(--t3);
+        }
+
+        .form-control.input-validation-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,.10);
+        }
+
+    textarea.form-control {
+        height: auto;
+        padding: 12px 14px;
+        resize: vertical;
+        min-height: 120px;
+        line-height: 1.65;
+    }
+
+    .field-validation-error:empty {
+        display: none !important;
+    }
+
+    .field-validation-error:not(:empty) {
+        font-size: 12px;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .field-validation-error:not(:empty)::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+    .alert-danger {
+        padding: 12px 16px;
+        background: rgba(239,68,68,.06);
+        border: 1px solid rgba(239,68,68,.2);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: #b91c1c;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .alert-danger i {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-danger ul {
+            margin: 4px 0 0 14px;
+        }
+
+        .alert-danger li {
+            margin-bottom: 2px;
+        }
+
+    /* ── Gün numarası seçici ──────────────────────────────────── */
+    .day-picker {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        background: var(--bg-canvas);
+        transition: border-color .18s, box-shadow .18s;
+        width: fit-content;
+    }
+
+        .day-picker:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #fff;
+        }
+
+    .day-btn {
+        width: 40px;
+        height: 42px;
+        border: none;
+        background: #f1f5f9;
+        color: var(--t2);
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .16s, color .16s;
+        flex-shrink: 0;
+        user-select: none;
+    }
+
+        .day-btn:hover {
+            background: var(--bg-hover);
+            color: var(--accent);
+        }
+
+        .day-btn:active {
+            background: rgba(2,132,199,.12);
+        }
+
+        .day-btn:first-child {
+            border-right: 1.5px solid var(--border);
+        }
+
+        .day-btn:last-child {
+            border-left: 1.5px solid var(--border);
+        }
+
+    #dayInput {
+        width: 70px;
+        text-align: center;
+        border: none;
+        background: transparent;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--t1);
+        outline: none;
+        height: 42px;
+        -moz-appearance: textfield;
+    }
+
+        #dayInput::-webkit-outer-spin-button,
+        #dayInput::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+    /* Gün renk göstergesi */
+    .day-color-strip {
+        width: 100%;
+        height: 4px;
+        border-radius: 99px;
+        margin-top: 6px;
+        transition: background .3s;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .form-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 18px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            box-shadow: 0 4px 16px rgba(2,132,199,.28);
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Sağ panel ────────────────────────────────────────────── */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* ── Plan kartı önizleme ──────────────────────────────────── */
+    .plan-preview-card {
+        margin: 16px;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #fff;
+    }
+
+    .ppc-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .ppc-day-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        transition: background .3s;
+    }
+
+    .ppc-day-num {
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1;
+        color: #fff;
+    }
+
+    .ppc-day-label {
+        font-size: 9px;
+        font-weight: 700;
+        color: rgba(255,255,255,.75);
+        letter-spacing: .5px;
+        text-transform: uppercase;
+    }
+
+    .ppc-title-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ppc-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+        min-height: 18px;
+    }
+
+    .ppc-tour {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 3px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .ppc-body {
+        padding: 14px 16px;
+    }
+
+    .ppc-desc {
+        font-size: 13px;
+        color: var(--t2);
+        line-height: 1.65;
+        min-height: 18px;
+    }
+
+    .ppc-footer {
+        padding: 10px 16px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--t3);
+    }
+
+    /* ── Mevcut plan listesi ──────────────────────────────────── */
+    .existing-plan-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border);
+        background: var(--bg-canvas);
+        margin-bottom: 8px;
+        transition: border-color .16s;
+    }
+
+        .existing-plan-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .existing-plan-item:hover {
+            border-color: #93c5fd;
+        }
+
+    .ep-day {
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 800;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .ep-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .ep-title {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--t1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ep-desc {
+        font-size: 11px;
+        color: var(--t3);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 1px;
+    }
+
+    /* ── İpuçları ─────────────────────────────────────────────── */
+    .tip-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 20px 18px;
+    }
+
+    .tip-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .tip-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+    .tip-text {
+        font-size: 12.5px;
+        color: var(--t2);
+        line-height: 1.5;
+    }
+
+        .tip-text strong {
+            color: var(--t1);
+        }
+
+    @@media (max-width:900px) {
+        .create-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+        <a href="/admin/turlar/duzenle/@tourId" class="btn btn-ghost" style="height:38px;padding:0 14px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Tur Planı Ekle</h1>
+            <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+                <strong style="color:var(--t2);">@tourName</strong> turuna yeni bir gün planı ekliyorsunuz.
+            </p>
+        </div>
+    </div>
+    <a href="/admin/turlar/@tourId/plan" class="btn btn-ghost">
+        <i class="fa-solid fa-list"></i> Tüm Planlar
+    </a>
+</div>
+
+<div class="create-grid">
+
+    <!-- ══ SOL — Form ══════════════════════════════════════════ -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div asp-validation-summary="ModelOnly" class="alert-danger" style="display:none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div><strong>Hataları düzeltin:</strong><ul></ul></div>
+        </div>
+
+        <form method="post" novalidate id="createPlanForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="TourId" value="@tourId" />
+
+            <!-- Gün & Başlık -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);">
+                        <i class="fa-solid fa-calendar-day"></i>
+                    </div>
+                    <div>
+                        <div class="v-card-title">Plan Bilgileri</div>
+                        <div class="v-card-sub">Gün numarası ve başlık</div>
+                    </div>
+                </div>
+
+                <div class="form-body">
+
+                    <!-- Gün numarası -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fa-solid fa-hashtag" style="color:var(--accent);font-size:12px;"></i>
+                            Gün Numarası <span class="req">*</span>
+                        </label>
+
+                        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                            <div class="day-picker">
+                                <button type="button" class="day-btn" onclick="changeDay(-1)">
+                                    <i class="fa-solid fa-minus" style="font-size:12px;"></i>
+                                </button>
+                                <input asp-for="DayNumber" id="dayInput" type="number" min="1" max="365"
+                                       oninput="onDayInput()" />
+                                <button type="button" class="day-btn" onclick="changeDay(1)">
+                                    <i class="fa-solid fa-plus" style="font-size:12px;"></i>
+                                </button>
+                            </div>
+
+                            <div id="dayLabel" style="font-size:13.5px;font-weight:600;color:var(--t2);">
+                                — gün seçin —
+                            </div>
+                        </div>
+
+                        <div class="day-color-strip" id="dayColorStrip"></div>
+                        <span asp-validation-for="DayNumber" class="field-validation-error"></span>
+                        <span class="form-hint">Turun kaçıncı günü olduğunu girin (1'den başlar).</span>
+                    </div>
+
+                    <!-- Başlık -->
+                    <div class="form-group">
+                        <label asp-for="Title" class="form-label">
+                            <i class="fa-solid fa-heading" style="color:var(--accent);font-size:12px;"></i>
+                            Plan Başlığı <span class="req">*</span>
+                        </label>
+                        <input asp-for="Title" class="form-control" id="planTitle"
+                               placeholder="Örn: Kapadokya'ya Varış & Şehir Turu"
+                               maxlength="120" autocomplete="off" />
+                        <span asp-validation-for="Title" class="field-validation-error"></span>
+                        <span class="form-hint">Günün özetini yansıtan kısa ve çarpıcı bir başlık yazın.</span>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Açıklama -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(168,85,247,.1);color:#a855f7;">
+                        <i class="fa-solid fa-align-left"></i>
+                    </div>
+                    <div>
+                        <div class="v-card-title">Gün Programı</div>
+                        <div class="v-card-sub">O güne ait detaylı aktiviteler ve notlar</div>
+                    </div>
+                </div>
+
+                <div class="form-body">
+                    <div class="form-group">
+                        <label asp-for="Description" class="form-label">
+                            <i class="fa-solid fa-list-ul" style="color:#a855f7;font-size:12px;"></i>
+                            Açıklama <span class="req">*</span>
+                        </label>
+                        <textarea asp-for="Description" class="form-control" id="planDesc"
+                                  placeholder="Sabah 08:00 — Kahvaltı ve check-out&#10;10:00 — Göreme Açık Hava Müzesi ziyareti&#10;13:00 — Yerel restoranda öğle yemeği&#10;..."
+                                  rows="7"></textarea>
+                        <span asp-validation-for="Description" class="field-validation-error"></span>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">
+                            <span class="form-hint">Saatler, aktiviteler ve önemli notları ekleyin.</span>
+                            <span style="font-size:11.5px;color:var(--t3);"><span id="descCount">0</span> karakter</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <a href="/admin/turlar/duzenle/@tourId" class="btn btn-ghost">
+                        <i class="fa-solid fa-xmark"></i> İptal
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-floppy-disk"></i> Planı Kaydet
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ══ SAĞ — Önizleme & Yardım ═══════════════════════════ -->
+    <div class="side-panel">
+
+        <!-- Plan Kartı Önizleme -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(168,85,247,.1);color:#a855f7;">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Canlı Önizleme</div>
+                    <div class="v-card-sub">Plan sitede bu şekilde görünür</div>
+                </div>
+            </div>
+
+            <div class="plan-preview-card">
+                <div class="ppc-header">
+                    <div class="ppc-day-badge" id="prevDayBadge" style="background:#cbd5e1;">
+                        <div class="ppc-day-num" id="prevDayNum">—</div>
+                        <div class="ppc-day-label">GÜN</div>
+                    </div>
+                    <div class="ppc-title-wrap">
+                        <div class="ppc-title" id="prevTitle">
+                            <span style="color:var(--t3);font-weight:400;font-size:12px;">Başlık girilmedi…</span>
+                        </div>
+                        <div class="ppc-tour">
+                            <i class="fa-solid fa-map-location-dot" style="font-size:10px;"></i>
+                            @tourName
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ppc-body">
+                    <div class="ppc-desc" id="prevDesc">
+                        <span style="color:var(--t3);font-style:italic;font-size:12px;">Açıklama girilmedi…</span>
+                    </div>
+                </div>
+
+                <div class="ppc-footer">
+                    <i class="fa-regular fa-clock"></i>
+                    <span id="prevLineCount">0 aktivite satırı</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mevcut Planlar -->
+        @if (ViewBag.ExistingPlans != null)
+        {
+            var plans = ViewBag.ExistingPlans as List<ResultTourPlanByTourIdDto>;
+            if (plans != null && plans.Any())
+            {
+                <div class="v-card">
+                    <div class="v-card-header">
+                        <div class="v-card-icon" style="background:rgba(34,197,94,.1);color:#16a34a;">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                        <div>
+                            <div class="v-card-title">Mevcut Planlar</div>
+                            <div class="v-card-sub">@plans.Count günlük plan mevcut</div>
+                        </div>
+                    </div>
+                    <div style="padding:14px 16px;">
+                        @{
+                            var dayColors = new[] { "#0284c7", "#16a34a", "#a855f7", "#f59e0b", "#ef4444", "#0891b2", "#7c3aed", "#059669", "#dc2626", "#d97706" };
+                        }
+                        @foreach (var plan in plans.OrderBy(p => p.DayNumber))
+                        {
+                            var color = dayColors[(plan.DayNumber - 1) % dayColors.Length];
+                            <div class="existing-plan-item">
+                                <div class="ep-day" style="background:@color;">@plan.DayNumber</div>
+                                <div class="ep-info">
+                                    <div class="ep-title">@plan.Title</div>
+                                    <div class="ep-desc">@plan.Description</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- İpuçları -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">İpuçları</div>
+                    <div class="v-card-sub">Daha iyi bir plan için</div>
+                </div>
+            </div>
+            <ul class="tip-list">
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Saatleri belirtin</strong> — Her aktiviteye saat eklemek ziyaretçilerin planlamaya yardımcı olur.</span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Dahil olan hizmetler</strong> — Öğünler, transferler ve giriş ücretleri hakkında net olun.</span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Konaklama</strong> — Gece konaklamasının nerede olduğunu belirtin.</span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Alternatifler</strong> — Hava koşullarına bağlı değişiklikler varsa not ekleyin.</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        /* ── Validation summary ── */
+        (function () {
+            var s = document.querySelector('[data-valmsg-summary]');
+            if (s && s.querySelectorAll('li').length > 0) s.style.display = 'flex';
+        })();
+
+        /* ── Gün renk paleti ── */
+        var dayColors = [
+            '#0284c7','#16a34a','#a855f7','#f59e0b','#ef4444',
+            '#0891b2','#7c3aed','#059669','#dc2626','#d97706'
+        ];
+
+        function getDayColor(day) {
+            if (!day || day < 1) return '#cbd5e1';
+            return dayColors[(day - 1) % dayColors.length];
+        }
+
+        /* ── Gün etiketi ── */
+        var dayLabels = {
+            1:'Birinci Gün', 2:'İkinci Gün', 3:'Üçüncü Gün',
+            4:'Dördüncü Gün', 5:'Beşinci Gün', 6:'Altıncı Gün',
+            7:'Yedinci Gün', 8:'Sekizinci Gün', 9:'Dokuzuncu Gün', 10:'Onuncu Gün'
+        };
+
+        function getDayLabel(day) {
+            if (!day || day < 1) return '— gün seçin —';
+            return dayLabels[day] || day + '. Gün';
+        }
+
+        /* ── Önizleme güncelle ── */
+        var titleEl = document.getElementById('planTitle');
+        var descEl  = document.getElementById('planDesc');
+        var dayEl   = document.getElementById('dayInput');
+
+        function refreshPreview() {
+            var day   = parseInt(dayEl.value) || 0;
+            var title = titleEl.value.trim();
+            var desc  = descEl.value.trim();
+            var color = getDayColor(day);
+
+            /* Gün rozeti */
+            var badge = document.getElementById('prevDayBadge');
+            var num   = document.getElementById('prevDayNum');
+            badge.style.background = color;
+            num.textContent = day > 0 ? day : '—';
+
+            /* Gün renk şeridi */
+            document.getElementById('dayColorStrip').style.background = color;
+
+            /* Gün etiketi */
+            document.getElementById('dayLabel').textContent = getDayLabel(day);
+            document.getElementById('dayLabel').style.color = day > 0 ? color : 'var(--t3)';
+
+            /* Başlık */
+            var prevTitle = document.getElementById('prevTitle');
+            prevTitle.innerHTML = title
+                ? '<strong>' + title + '</strong>'
+                : '<span style="color:var(--t3);font-weight:400;font-size:12px;">Başlık girilmedi…</span>';
+
+            /* Açıklama */
+            var prevDesc = document.getElementById('prevDesc');
+            if (desc) {
+                prevDesc.textContent = desc;
+                prevDesc.style.fontStyle = 'normal';
+                prevDesc.style.color = 'var(--t2)';
+            } else {
+                prevDesc.innerHTML = '<span style="color:var(--t3);font-style:italic;font-size:12px;">Açıklama girilmedi…</span>';
+            }
+
+            /* Satır sayısı */
+            var lineCount = desc ? desc.split('\n').filter(function(l){ return l.trim().length > 0; }).length : 0;
+            document.getElementById('prevLineCount').textContent = lineCount + ' aktivite satırı';
+
+            /* Karakter sayacı */
+            document.getElementById('descCount').textContent = descEl.value.length;
+        }
+
+        /* ── + / - butonları ── */
+        function changeDay(delta) {
+            var val = parseInt(dayEl.value) || 0;
+            val = Math.max(1, Math.min(365, val + delta));
+            dayEl.value = val;
+            refreshPreview();
+        }
+
+        function onDayInput() {
+            var val = parseInt(dayEl.value);
+            if (val < 1)   dayEl.value = 1;
+            if (val > 365) dayEl.value = 365;
+            refreshPreview();
+        }
+
+        /* ── Dinleyiciler ── */
+        titleEl.addEventListener('input', refreshPreview);
+        descEl.addEventListener('input', refreshPreview);
+        dayEl.addEventListener('input', onDayInput);
+
+        /* İlk render */
+        refreshPreview();
+    </script>
+}

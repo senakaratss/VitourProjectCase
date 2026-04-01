@@ -1,0 +1,1618 @@
+﻿@model List<ResultReviewByTourIdDto>
+
+@{
+    var tourName = ViewBag.TourName as string ?? "Tur";
+    var tourId = ViewBag.TourId as string ?? "";
+
+    ViewData["Title"] = tourName + " - Yorumlar";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turlar";
+    ViewData["Breadcrumb"] = "Turlar / " + tourName + " / Yorumlar";
+}
+
+<style>
+    /* ── Geri + başlık bar ────────────────────────────────────── */
+    .page-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .page-header-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    /* ── Tur özet kartı ───────────────────────────────────────── */
+    .tour-summary {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 18px 22px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .tour-thumb {
+        width: 64px;
+        height: 52px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: linear-gradient(135deg,#e0f2fe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #93c5fd;
+        font-size: 22px;
+        overflow: hidden;
+    }
+
+        .tour-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .tour-info {
+        flex: 1;
+        min-width: 180px;
+    }
+
+    .tour-info-name {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .tour-info-meta {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-size: 12.5px;
+        color: var(--t3);
+        margin-top: 5px;
+    }
+
+        .tour-info-meta span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+    .tour-summary-divider {
+        width: 1px;
+        height: 44px;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+
+    .summary-stat {
+        text-align: center;
+        padding: 0 14px;
+    }
+
+    .summary-stat-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1;
+    }
+
+    .summary-stat-label {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 3px;
+    }
+
+    /* Ortalama puan blok */
+    .avg-block {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0 14px;
+        gap: 5px;
+    }
+
+    .avg-number {
+        font-size: 28px;
+        font-weight: 900;
+        color: #b45309;
+        line-height: 1;
+    }
+
+    .avg-stars {
+        display: flex;
+        gap: 3px;
+    }
+
+        .avg-stars i {
+            font-size: 14px;
+        }
+
+    /* Dağılım çubuğu */
+    .dist-block {
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .dist-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+    }
+
+    .dist-label {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        color: var(--t2);
+        font-weight: 600;
+        width: 28px;
+        flex-shrink: 0;
+    }
+
+        .dist-label i {
+            font-size: 10px;
+            color: #f59e0b;
+        }
+
+    .dist-bar-wrap {
+        flex: 1;
+        height: 8px;
+        background: #f1f5f9;
+        border-radius: 99px;
+        overflow: hidden;
+    }
+
+    .dist-bar-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: #f59e0b;
+        transition: width .5s ease;
+    }
+
+    .dist-count {
+        width: 24px;
+        text-align: right;
+        color: var(--t3);
+        flex-shrink: 0;
+    }
+
+    /* ── Stat row ─────────────────────────────────────────────── */
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+
+    .stat-chip {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: transform .18s, box-shadow .18s;
+    }
+
+        .stat-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,.09);
+        }
+
+    .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .stat-val {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    /* ── Toolbar ──────────────────────────────────────────────── */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 12px 16px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 12px;
+        height: 36px;
+        flex: 1;
+        min-width: 180px;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    .filter-select {
+        height: 36px;
+        padding: 0 30px 0 11px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12.5px;
+        color: var(--t2);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 9px center;
+        transition: border-color .18s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12.5px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .btn-icon.edit:hover {
+            background: rgba(2,132,199,.08);
+            border-color: rgba(2,132,199,.3);
+            color: var(--accent);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+        .btn-icon.approve:hover {
+            background: rgba(34,197,94,.08);
+            border-color: rgba(34,197,94,.3);
+            color: #16a34a;
+        }
+
+    /* ── Toplu işlem ──────────────────────────────────────────── */
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 16px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 13px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    .btn-bulk-approve {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 13px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(34,197,94,.3);
+        background: rgba(34,197,94,.07);
+        color: #16a34a;
+        transition: all .16s;
+    }
+
+        .btn-bulk-approve:hover {
+            background: rgba(34,197,94,.15);
+        }
+
+    /* ── Yorum kartları grid ──────────────────────────────────── */
+    .reviews-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .review-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: transform .18s, box-shadow .18s;
+        position: relative;
+    }
+
+        .review-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 22px rgba(0,0,0,.1);
+        }
+
+    /* Seçim checkbox */
+    .rc-checkbox {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .review-card.selected {
+        border-color: var(--accent);
+        background: #f0f8ff;
+    }
+
+    /* Durum şeridi */
+    .rc-status-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 3px;
+        height: 100%;
+        border-radius: var(--radius) 0 0 var(--radius);
+    }
+
+        .rc-status-bar.active {
+            background: #22c55e;
+        }
+
+        .rc-status-bar.inactive {
+            background: #cbd5e1;
+        }
+
+    .rc-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-left: 8px;
+    }
+
+    .rc-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#dbeafe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 800;
+        color: #2563eb;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+
+    .rc-name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .rc-date {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 1px;
+    }
+
+    .rc-stars {
+        display: flex;
+        gap: 2px;
+        padding-left: 8px;
+    }
+
+        .rc-stars i {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+            .rc-stars i.lit {
+                color: #f59e0b;
+            }
+
+    .rc-score-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 700;
+        margin-left: 6px;
+    }
+
+    .sp-5 {
+        background: rgba(2,132,199,.1);
+        color: var(--accent);
+    }
+
+    .sp-4 {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+    .sp-3 {
+        background: rgba(245,158,11,.1);
+        color: #b45309;
+    }
+
+    .sp-2 {
+        background: rgba(249,115,22,.1);
+        color: #ea580c;
+    }
+
+    .sp-1 {
+        background: rgba(239,68,68,.1);
+        color: #dc2626;
+    }
+
+    .rc-comment {
+        font-size: 13px;
+        color: var(--t2);
+        line-height: 1.65;
+        padding-left: 8px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        cursor: pointer;
+        transition: color .15s;
+    }
+
+        .rc-comment:hover {
+            color: var(--t1);
+        }
+
+        .rc-comment.expanded {
+            -webkit-line-clamp: unset;
+        }
+
+    .rc-expand-btn {
+        font-size: 11.5px;
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+        padding-left: 8px;
+        border: none;
+        background: transparent;
+        font-family: inherit;
+        display: none;
+    }
+
+    .rc-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 8px;
+        padding-top: 6px;
+        border-top: 1px solid var(--border);
+    }
+
+    .rc-status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 20px;
+    }
+
+        .rc-status-badge .pip {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+    .badge-active {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+        .badge-active .pip {
+            background: #22c55e;
+        }
+
+    .badge-inactive {
+        background: rgba(148,163,184,.1);
+        color: #64748b;
+    }
+
+        .badge-inactive .pip {
+            background: #94a3b8;
+        }
+
+    .rc-actions {
+        display: flex;
+        gap: 5px;
+    }
+
+    /* ── Tablo görünümü ───────────────────────────────────────── */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        user-select: none;
+        cursor: pointer;
+    }
+
+        th.no-sort {
+            cursor: default;
+        }
+
+        th .si {
+            margin-left: 3px;
+            font-size: 9px;
+            opacity: .4;
+        }
+
+        th.asc .si, th.desc .si {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+    td {
+        padding: 12px 14px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 40px;
+        padding: 12px 6px 12px 14px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ua {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#dbeafe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 800;
+        color: #2563eb;
+        flex-shrink: 0;
+        text-transform: uppercase;
+    }
+
+    .un {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .star-row-sm {
+        display: flex;
+        gap: 2px;
+    }
+
+        .star-row-sm i {
+            font-size: 11px;
+            color: #e2e8f0;
+        }
+
+            .star-row-sm i.lit {
+                color: #f59e0b;
+            }
+
+    .comment-trunc {
+        max-width: 260px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12.5px;
+        cursor: pointer;
+    }
+
+        .comment-trunc:hover {
+            color: var(--t1);
+        }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    /* ── View toggle ──────────────────────────────────────────── */
+    .view-toggle {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .vt-btn {
+        width: 34px;
+        height: 34px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        transition: background .16s, color .16s;
+    }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .vt-btn:not(.active):hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Boş durum ────────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 14px;
+            display: block;
+            opacity: .35;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+    /* ── Sayfalama ────────────────────────────────────────────── */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 13px 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--t3);
+    }
+
+    .pagination-btns {
+        display: flex;
+        gap: 4px;
+    }
+
+    .pg-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .pg-btn:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .pg-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .pg-btn:disabled {
+            opacity: .3;
+            cursor: default;
+        }
+
+    @@media (max-width: 768px) {
+        .reviews-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .tour-summary-divider {
+            display: none;
+        }
+
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div class="page-header">
+    <div class="page-header-left">
+        <a href="/admin/turlar/duzenle/@tourId" class="btn btn-ghost" style="height:38px;padding:0 14px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Tur Yorumları</h1>
+            <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+                <strong style="color:var(--t2);">@tourName</strong> turuna ait tüm yorumlar
+            </p>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <a href="/admin/turlar/duzenle/@tourId" class="btn btn-ghost">
+            <i class="fa-solid fa-pen"></i> Turu Düzenle
+        </a>
+        <a href="/admin/yorumlar/yeni?tourId=@tourId" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Yorum Ekle
+        </a>
+    </div>
+</div>
+
+<!-- ── Tur Özet Kartı ────────────────────────────────────────── -->
+<div class="tour-summary">
+
+    <!-- Görsel + isim -->
+    <div class="tour-thumb">
+        @if (!string.IsNullOrEmpty(ViewBag.TourCoverImage as string))
+        {
+            <img src="@ViewBag.TourCoverImage" alt="@tourName"
+                 onerror="this.parentElement.innerHTML='<i class=\'fa-solid fa-image\'></i>'" />
+        }
+        else
+        {
+            <i class="fa-solid fa-image"></i>
+        }
+    </div>
+
+    <div class="tour-info">
+        <div class="tour-info-name">@tourName</div>
+        <div class="tour-info-meta">
+            @if (ViewBag.TourDayCount != null)
+            {
+                <span><i class="fa-regular fa-calendar-days"></i> @ViewBag.TourDayCount gün</span>
+            }
+            @if (ViewBag.TourCapacity != null)
+            {
+                <span><i class="fa-solid fa-users"></i> @ViewBag.TourCapacity kişi</span>
+            }
+            @if (ViewBag.TourPrice != null)
+            {
+                <span><i class="fa-solid fa-tag"></i> ₺@(string.Format("{0:N0}", ViewBag.TourPrice))</span>
+            }
+        </div>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        var avg = Model.Average(r => r.Score);
+        var totalCnt = Model.Count;
+
+        <div class="tour-summary-divider"></div>
+
+        <!-- Ortalama puan -->
+        <div class="avg-block">
+            <div class="avg-number">@avg.ToString("F1")</div>
+            <div class="avg-stars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= Math.Floor(avg))
+                    {
+                        <i class="fa-solid fa-star" style="color:#f59e0b;"></i>
+                    }
+                    else if (avg % 1 >= 0.5 && i == (int)Math.Ceiling(avg))
+                    {
+                        <i class="fa-solid fa-star-half-stroke" style="color:#f59e0b;"></i>
+                    }
+                    else
+                    {
+                        <i class="fa-regular fa-star" style="color:#e2e8f0;"></i>
+                    }
+                }
+            </div>
+            <div style="font-size:11px;color:var(--t3);margin-top:2px;">@totalCnt yorum</div>
+        </div>
+
+        <div class="tour-summary-divider"></div>
+
+        <!-- Puan dağılımı -->
+        <div class="dist-block">
+            @for (int star = 5; star >= 1; star--)
+            {
+                var cnt = Model.Count(r => r.Score == star);
+                var pct = totalCnt > 0 ? (cnt * 100.0 / totalCnt) : 0;
+                <div class="dist-row">
+                    <div class="dist-label">@star <i class="fa-solid fa-star"></i></div>
+                    <div class="dist-bar-wrap">
+                        <div class="dist-bar-fill" style="width:@pct.ToString("F0")%"></div>
+                    </div>
+                    <div class="dist-count">@cnt</div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+<!-- ── Stat chips ────────────────────────────────────────────── -->
+<div class="stat-row">
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(2,132,199,.1);color:var(--accent);">
+            <i class="fa-solid fa-comments"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count ?? 0)</div>
+            <div class="stat-label">Toplam Yorum</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(34,197,94,.1);color:#16a34a;">
+            <i class="fa-solid fa-eye"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(r => r.Status) ?? 0)</div>
+            <div class="stat-label">Yayında</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(148,163,184,.1);color:#64748b;">
+            <i class="fa-solid fa-clock"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(r => !r.Status) ?? 0)</div>
+            <div class="stat-label">Bekleyen</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(2,132,199,.1);color:var(--accent);">
+            <i class="fa-solid fa-ranking-star"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(r => r.Score == 5) ?? 0)</div>
+            <div class="stat-label">5 Yıldız</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(239,68,68,.1);color:#dc2626;">
+            <i class="fa-solid fa-face-frown"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(r => r.Score <= 2) ?? 0)</div>
+            <div class="stat-label">Düşük Puan</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Toplu İşlem ───────────────────────────────────────────── -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> yorum seçildi</span>
+    <button class="btn-bulk-approve" onclick="bulkApprove()">
+        <i class="fa-solid fa-circle-check"></i> Yayınla
+    </button>
+    <button class="btn-bulk-danger" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash"></i> Sil
+    </button>
+    <button class="btn-ghost" style="height:32px;font-size:12px;" onclick="clearSel()">
+        <i class="fa-solid fa-xmark"></i> İptal
+    </button>
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Ad veya yorum içinde ara…" />
+    </div>
+
+    <select class="filter-select" id="statusFilter">
+        <option value="">Tüm Durumlar</option>
+        <option value="active">Yayında</option>
+        <option value="inactive">Bekleyen</option>
+    </select>
+
+    <select class="filter-select" id="scoreFilter">
+        <option value="">Tüm Puanlar</option>
+        <option value="5">★★★★★ 5</option>
+        <option value="4">★★★★☆ 4</option>
+        <option value="3">★★★☆☆ 3</option>
+        <option value="2">★★☆☆☆ 2</option>
+        <option value="1">★☆☆☆☆ 1</option>
+    </select>
+
+    <select class="filter-select" id="sortSelect">
+        <option value="date-desc">En Yeni</option>
+        <option value="date-asc">En Eski</option>
+        <option value="score-desc">En Yüksek Puan</option>
+        <option value="score-asc">En Düşük Puan</option>
+    </select>
+
+    <span style="font-size:12px;color:var(--t3);margin-left:auto;white-space:nowrap;">
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> yorum
+    </span>
+
+    <div class="view-toggle">
+        <button class="vt-btn active" id="btnCard" onclick="setView('card')" title="Kart Görünümü">
+            <i class="fa-solid fa-grip"></i>
+        </button>
+        <button class="vt-btn" id="btnTable" onclick="setView('table')" title="Tablo Görünümü">
+            <i class="fa-solid fa-table-list"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══ KART GÖRÜNÜMÜ ═════════════════════════════════════════ -->
+<div id="cardView">
+    @if (Model != null && Model.Any())
+    {
+        <div class="reviews-grid" id="cardsGrid">
+            @foreach (var r in Model)
+            {
+                var init = string.Join("", r.NameSurname.Split(' ').Select(w => w.Length > 0 ? w[0].ToString() : "")).Substring(0, Math.Min(2, r.NameSurname.Replace(" ", "").Length)).ToUpper();
+
+                <div class="review-card @(r.Status ? "" : "pending-card") card-item"
+                     data-name="@r.NameSurname.ToLower()"
+                     data-comment="@r.Comment.ToLower()"
+                     data-score="@r.Score"
+                     data-status="@(r.Status ? "active" : "inactive")"
+                     data-date="@r.ReviewDate.ToString("yyyy-MM-dd")">
+
+                    <div class="rc-status-bar @(r.Status ? "active" : "inactive")"></div>
+                    <input type="checkbox" class="rc-checkbox row-cb" value="@r.ReviewId" />
+
+                    <div class="rc-header">
+                        <div class="rc-avatar">@init</div>
+                        <div>
+                            <div class="rc-name">@r.NameSurname</div>
+                            <div class="rc-date">@r.ReviewDate.ToString("dd MMM yyyy")</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;padding-left:8px;">
+                        <div class="rc-stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="fa-@(i <= r.Score ? "solid" : "regular") fa-star @(i <= r.Score ? "lit" : "")"></i>
+                            }
+                        </div>
+                        <span class="rc-score-badge sp-@r.Score">@r.Score / 5</span>
+                    </div>
+
+                    <div class="rc-comment" id="rc-text-@r.ReviewId">@r.Comment</div>
+                    <button class="rc-expand-btn" id="rc-expand-@r.ReviewId"
+                            onclick="toggleExpand('@r.ReviewId')">
+                        Devamını oku
+                    </button>
+
+                    <div class="rc-footer">
+                        <span class="rc-status-badge @(r.Status ? "badge-active" : "badge-inactive")">
+                            <span class="pip"></span>
+                            @(r.Status ? "Yayında" : "Bekliyor")
+                        </span>
+                        <div class="rc-actions">
+                            <a href="/admin/yorumlar/duzenle/@r.ReviewId" class="btn-icon edit" title="Düzenle">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            @if (!r.Status)
+                            {
+                                <form asp-action="Approve" asp-controller="Review"
+                                      asp-route-id="@r.ReviewId" method="post" style="display:inline;">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-icon approve" title="Yayınla">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    </button>
+                                </form>
+                            }
+                            <form asp-action="Delete" asp-controller="Review"
+                                  asp-route-id="@r.ReviewId" method="post"
+                                  style="display:inline;" id="del-@r.ReviewId">
+                                @Html.AntiForgeryToken()
+                                <button type="button" class="btn-icon danger" title="Sil"
+                                        onclick="confirmDel('@r.ReviewId', @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(r.NameSurname)))">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:60px 20px;">
+            <i class="fa-solid fa-comment-slash"></i>
+            <h3>Henüz yorum yok</h3>
+            <p>Bu tura ait yorum bulunmuyor.</p>
+            <a href="/admin/yorumlar/yeni?tourId=@tourId" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> İlk Yorumu Ekle
+            </a>
+        </div>
+    }
+</div>
+
+<!-- ══ TABLO GÖRÜNÜMÜ ════════════════════════════════════════ -->
+<div id="tableView" style="display:none;">
+    <div class="table-card">
+        <div class="table-card-header">
+            <div>
+                <span style="font-size:14px;font-weight:700;color:var(--t1);">Yorum Listesi</span>
+                <span style="font-size:12px;color:var(--t3);margin-left:8px;">Toplam @(Model?.Count ?? 0) kayıt</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <button class="btn-icon" title="Yenile" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="tbl-wrap">
+            <table id="reviewTable">
+                <thead>
+                    <tr>
+                        <th class="cb-cell no-sort">
+                            <input type="checkbox" id="selectAll" />
+                        </th>
+                        <th data-col="name">Kullanıcı <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="comment" class="hide-sm">Yorum <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="score">Puan <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="date" class="hide-sm">Tarih <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="status" class="hide-sm">Durum <i class="fa-solid fa-sort si"></i></th>
+                        <th class="no-sort" style="text-align:right;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var r in Model)
+                        {
+                            var init = string.Join("", r.NameSurname.Split(' ').Select(w => w.Length > 0 ? w[0].ToString() : "")).Substring(0, Math.Min(2, r.NameSurname.Replace(" ", "").Length)).ToUpper();
+
+                            <tr class="review-row"
+                                data-name="@r.NameSurname.ToLower()"
+                                data-comment="@r.Comment.ToLower()"
+                                data-score="@r.Score"
+                                data-status="@(r.Status ? "active" : "inactive")"
+                                data-date="@r.ReviewDate.ToString("yyyy-MM-dd")">
+
+                                <td class="cb-cell">
+                                    <input type="checkbox" class="row-cb" value="@r.ReviewId" />
+                                </td>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="ua">@init</div>
+                                        <div class="un">@r.NameSurname</div>
+                                    </div>
+                                </td>
+                                <td class="hide-sm">
+                                    <div class="comment-trunc" title="@r.Comment">@r.Comment</div>
+                                </td>
+                                <td>
+                                    <div style="display:flex;flex-direction:column;gap:4px;">
+                                        <span class="rc-score-badge sp-@r.Score" style="width:fit-content;">
+                                            <i class="fa-solid fa-star" style="font-size:10px;"></i> @r.Score
+                                        </span>
+                                        <div class="star-row-sm">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="fa-@(i <= r.Score ? "solid" : "regular") fa-star @(i <= r.Score ? "lit" : "")"></i>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="hide-sm" style="font-size:12.5px;color:var(--t3);">
+                                    @r.ReviewDate.ToString("dd MMM yyyy")
+                                </td>
+                                <td class="hide-sm">
+                                    @if (r.Status)
+                                    {
+                                        <span class="rc-status-badge badge-active"><span class="pip"></span> Yayında</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="rc-status-badge badge-inactive"><span class="pip"></span> Bekliyor</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="/admin/yorumlar/duzenle/@r.ReviewId" class="btn-icon edit" title="Düzenle">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        @if (!r.Status)
+                                        {
+                                            <form asp-action="Approve" asp-controller="Review" asp-route-id="@r.ReviewId" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn-icon approve" title="Yayınla">
+                                                    <i class="fa-solid fa-circle-check"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                        <form asp-action="Delete" asp-controller="Review" asp-route-id="@r.ReviewId" method="post" style="display:inline;" id="del-tbl-@r.ReviewId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="button" class="btn-icon danger" title="Sil"
+                                                    onclick="confirmDel('@r.ReviewId', @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(r.NameSurname)), true)">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-comment-slash"></i>
+                                    <h3>Henüz yorum yok</h3>
+                                    <p>Bu tura ait yorum bulunmuyor.</p>
+                                    <a href="/admin/yorumlar/yeni?tourId=@tourId" class="btn btn-primary">
+                                        <i class="fa-solid fa-plus"></i> İlk Yorumu Ekle
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noResults" style="display:none;">
+            <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı filtreler deneyin.</p>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <span class="pagination-info">Toplam <strong>@(Model?.Count ?? 0)</strong> kayıt</span>
+            <div class="pagination-btns">
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+                <button class="pg-btn active">1</button>
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* ── Görünüm ── */
+        function setView(v) {
+            var isCard = v === 'card';
+            document.getElementById('cardView').style.display  = isCard ? 'block' : 'none';
+            document.getElementById('tableView').style.display = isCard ? 'none'  : 'block';
+            document.getElementById('btnCard').classList.toggle('active', isCard);
+            document.getElementById('btnTable').classList.toggle('active', !isCard);
+            localStorage.setItem('tourReviewView', v);
+            applyFilters();
+        }
+
+        (function() {
+            if (localStorage.getItem('tourReviewView') === 'table') setView('table');
+        })();
+
+        /* ── Filtre ── */
+        var searchInput  = document.getElementById('searchInput');
+        var statusFilter = document.getElementById('statusFilter');
+        var scoreFilter  = document.getElementById('scoreFilter');
+        var sortSelect   = document.getElementById('sortSelect');
+        var visibleCount = document.getElementById('visibleCount');
+        var noResults    = document.getElementById('noResults');
+
+        function applyFilters() {
+            var q      = searchInput.value.toLowerCase().trim();
+            var status = statusFilter.value;
+            var score  = scoreFilter.value;
+            var cnt    = 0;
+
+            /* Kart öğeleri */
+            document.querySelectorAll('.card-item').forEach(function(c) {
+                var show =
+                    (!q      || c.dataset.name.includes(q) || c.dataset.comment.includes(q)) &&
+                    (!status || c.dataset.status === status) &&
+                    (!score  || c.dataset.score  === score);
+                c.style.display = show ? '' : 'none';
+                if (show) cnt++;
+            });
+
+            /* Tablo satırları */
+            document.querySelectorAll('.review-row').forEach(function(r) {
+                var show =
+                    (!q      || r.dataset.name.includes(q) || r.dataset.comment.includes(q)) &&
+                    (!status || r.dataset.status === status) &&
+                    (!score  || r.dataset.score  === score);
+                r.style.display = show ? '' : 'none';
+            });
+
+            visibleCount.textContent = cnt;
+            if (noResults) noResults.style.display = cnt === 0 ? 'block' : 'none';
+
+            applySort();
+        }
+
+        /* ── Sıralama ── */
+        function applySort() {
+            var val   = sortSelect.value;
+            var grid  = document.getElementById('cardsGrid');
+            var tbody = document.getElementById('tableBody');
+            if (!grid && !tbody) return;
+
+            function sortItems(items, dataset) {
+                return items.sort(function(a, b) {
+                    if (val === 'date-desc') return b.dataset.date.localeCompare(a.dataset.date);
+                    if (val === 'date-asc')  return a.dataset.date.localeCompare(b.dataset.date);
+                    if (val === 'score-desc') return parseInt(b.dataset.score) - parseInt(a.dataset.score);
+                    if (val === 'score-asc')  return parseInt(a.dataset.score) - parseInt(b.dataset.score);
+                    return 0;
+                });
+            }
+
+            if (grid) {
+                var cards = Array.from(grid.querySelectorAll('.card-item'));
+                sortItems(cards).forEach(function(c){ grid.appendChild(c); });
+            }
+
+            if (tbody) {
+                var rows = Array.from(tbody.querySelectorAll('.review-row'));
+                sortItems(rows).forEach(function(r){ tbody.appendChild(r); });
+            }
+        }
+
+        [searchInput, statusFilter, scoreFilter].forEach(function(el) {
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', applyFilters);
+        });
+
+        sortSelect.addEventListener('change', applySort);
+
+        /* ── Tablo sütun sıralama ── */
+        document.querySelectorAll('th[data-col]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = this.dataset.col;
+                var asc = !this.classList.contains('asc');
+                document.querySelectorAll('th[data-col]').forEach(function(t) {
+                    t.classList.remove('asc','desc');
+                    t.querySelector('.si').className = 'fa-solid fa-sort si';
+                });
+                this.classList.add(asc ? 'asc' : 'desc');
+                this.querySelector('.si').className = 'fa-solid fa-sort-' + (asc ? 'up' : 'down') + ' si';
+
+                var tbody = document.getElementById('tableBody');
+                var rows  = Array.from(tbody.querySelectorAll('.review-row'));
+                rows.sort(function(a, b) {
+                    if (col === 'score') return asc ? parseInt(a.dataset.score) - parseInt(b.dataset.score) : parseInt(b.dataset.score) - parseInt(a.dataset.score);
+                    var va = a.dataset[col === 'name' ? 'name' : col === 'comment' ? 'comment' : col === 'date' ? 'date' : 'status'];
+                    var vb = b.dataset[col === 'name' ? 'name' : col === 'comment' ? 'comment' : col === 'date' ? 'date' : 'status'];
+                    return asc ? (va||'').localeCompare(vb||'','tr') : (vb||'').localeCompare(va||'','tr');
+                });
+                rows.forEach(function(r){ tbody.appendChild(r); });
+            });
+        });
+
+        /* ── Checkbox ── */
+        var bulkBar   = document.getElementById('bulkBar');
+        var bulkCount = document.getElementById('bulkCount');
+        var selectAll = document.getElementById('selectAll');
+
+        function updateBulk() {
+            var checked = document.querySelectorAll('.row-cb:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            if (selectAll) {
+                var all = document.querySelectorAll('.row-cb');
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = selectAll.checked; });
+                updateBulk();
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.row-cb')) {
+                var card = e.target.closest('.review-card');
+                if (card) card.classList.toggle('selected', e.target.checked);
+                updateBulk();
+            }
+        });
+
+        function clearSel() {
+            document.querySelectorAll('.row-cb').forEach(function(cb){
+                cb.checked = false;
+                var card = cb.closest('.review-card');
+                if (card) card.classList.remove('selected');
+            });
+            if (selectAll) selectAll.checked = false;
+            updateBulk();
+        }
+
+        function bulkApprove() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c){ return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' yorumu yayınlamak istediğinize emin misiniz?')) return;
+            console.log('Yayınlanacak:', ids); // TODO: AJAX
+        }
+
+        function bulkDelete() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c){ return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' yorumu kalıcı silmek istediğinize emin misiniz?')) return;
+            console.log('Silinecek:', ids); // TODO: AJAX
+        }
+
+        /* ── Tek sil ── */
+        function confirmDel(id, name, isTbl) {
+            if (!confirm(name + ' adlı kullanıcının yorumunu silmek istediğinize emin misiniz?')) return;
+            var formId = isTbl ? 'del-tbl-' + id : 'del-' + id;
+            var f = document.getElementById(formId);
+            if (f) f.submit();
+        }
+
+        /* ── Yorum genişlet/daralt ── */
+        function toggleExpand(id) {
+            var text = document.getElementById('rc-text-' + id);
+            var btn  = document.getElementById('rc-expand-' + id);
+            if (!text) return;
+            var expanded = text.classList.toggle('expanded');
+            btn.textContent = expanded ? 'Daha az göster' : 'Devamını oku';
+        }
+
+        /* Uzun yorumlar için "Devamını oku" butonunu göster */
+        document.querySelectorAll('.rc-comment').forEach(function(el) {
+            if (el.scrollHeight > el.clientHeight + 2) {
+                var id  = el.id.replace('rc-text-', '');
+                var btn = document.getElementById('rc-expand-' + id);
+                if (btn) btn.style.display = 'block';
+            }
+        });
+
+        /* İlk sıralama */
+        applySort();
+    </script>
+}

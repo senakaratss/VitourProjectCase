@@ -1,0 +1,82 @@
+﻿@model TourDetailDto
+<div class="tab-pane fade show active" id="pills-information" role="tabpanel"
+     aria-labelledby="pills-information-tab" tabindex="0">
+    <div class="row mb-50">
+        <div class="col-lg-12">
+            <div class="inner-heading-wrap flex-two">
+                <div class="inner-heading">
+                    <span class="feature">@Model.Badge</span>
+                    <h2 class="title">@Model.Title</h2>
+                    <ul class="flex-three list-wrap-heading">
+                        <li class="flex-three">
+                            <i class="icon-time-left"></i>
+                            <span>@(Model.DayCount - 1) Gece @Model.DayCount Gün</span>
+                        </li>
+                        <li class="flex-three">
+                            <i class="icon-user"></i>
+                            <span>Kapasite: @Model.Capacity</span>
+                        </li>
+                    </ul>
+
+                </div>
+                <div class="inner-price">
+                    <div class="flex-three">
+                        <div class="start">
+                            @if (Model.ReviewCount == 0)
+                            {
+                                <span>Henüz Yorum Yapılmamış</span>
+                            }
+                            else
+                            {
+                                int fullStars = (int)Model.ReviewScore;
+                                int emptyStars = 5 - fullStars;
+
+                                for (int i = 0; i < fullStars; i++)
+                                {
+                                    <i class="icon-Star" style="color:#ffc107"></i>
+
+                                }
+                                for (int i = 0; i < emptyStars; i++)
+                                {
+                                    <i class="icon-Star" style="color:#ddd"></i>
+
+                                }
+                                <span class="review">(@Model.ReviewCount Yorum)</span>
+
+                            }
+                        </div>
+                    </div>
+                    <p class="price-sale text-main">
+                        @Model.Price ₺ <span class="price" style="text-decoration:line-through">@(Model.Price + Model.Price * 20 / 100)₺</span>
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    @*  <div class="row mb-40 image-gallery-single">
+        <div class="col-12 col-sm-6">
+            <img src="/vitour/assets/images/destination/1.jpg" alt="image">
+        </div>
+        <div class="col-6 col-sm-3">
+            <img src="/vitour/assets/images/destination/2.jpg" alt="image">
+        </div>
+        <div class="col-6 col-sm-3">
+            <img src="/vitour/assets/images/destination/3.jpg" alt="image">
+        </div>
+    </div> *@
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="information-content-tour">
+                <div class="description-wrap mb-40">
+                    <p class="des">
+                        @Model.Description
+                    </p>
+                </div>
+            </div>
+        </div>
+        @await Component.InvokeAsync("_TourDetailsRightSidebarComponentPartial")
+    </div>
+
+</div>

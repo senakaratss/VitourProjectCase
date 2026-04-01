@@ -1,0 +1,954 @@
+﻿@using Microsoft.AspNetCore.Localization
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer
+@{
+    var requestCultureFeature = Context.Features.Get<IRequestCultureFeature>();
+    var currentCulture = requestCultureFeature?.RequestCulture.Culture.Name ?? "en";
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Vitour Admin</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <style>
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   DESIGN TOKENS
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        :root {
+            /* Sidebar */
+            --sidebar-width: 260px;
+            --sidebar-collapsed: 68px;
+            /* Palette — crisp light */
+            --bg-canvas: #f0f4f8;
+            --bg-sidebar: #ffffff;
+            --bg-topbar: #ffffff;
+            --bg-card: #f8fafc;
+            --bg-hover: #f1f6ff;
+            --bg-active: #e8f1ff;
+            /* Accent — ocean teal */
+            --accent: #0284c7;
+            --accent-light: #0ea5e9;
+            --accent-glow: rgba(2,132,199,.12);
+            --gold: #b45309;
+            --gold-dim: rgba(180,83,9,.10);
+            /* Text */
+            --t1: #0f172a;
+            --t2: #475569;
+            --t3: #94a3b8;
+            /* Borders */
+            --border: rgba(0,0,0,.08);
+            --border-focus: var(--accent);
+            /* Misc */
+            --radius: 10px;
+            --radius-sm: 7px;
+            --shadow: 0 1px 8px rgba(0,0,0,.08), 0 4px 24px rgba(0,0,0,.05);
+            --ease: .2s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   RESET + BASE
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-canvas);
+            color: var(--t1);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   SIDEBAR
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .sidebar {
+            position: fixed;
+            inset: 0 auto 0 0;
+            width: var(--sidebar-width);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            transition: width var(--ease), transform var(--ease);
+            overflow: hidden;
+            box-shadow: 2px 0 12px rgba(0,0,0,.06);
+        }
+
+        /* ── Brand / Logo ── */
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 22px 18px 18px;
+            border-bottom: 1px solid var(--border);
+            min-height: 68px;
+            flex-shrink: 0;
+        }
+
+        .brand-mark {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--accent), #0369a1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 12px var(--accent-glow);
+            transition: box-shadow var(--ease);
+        }
+
+        .sidebar-brand:hover .brand-mark {
+            box-shadow: 0 4px 20px rgba(2,132,199,.28);
+        }
+
+        .brand-text {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .brand-name {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--t1);
+            letter-spacing: .3px;
+            line-height: 1;
+        }
+
+        .brand-tag {
+            display: block;
+            font-size: 9.5px;
+            font-weight: 500;
+            letter-spacing: 2.8px;
+            text-transform: uppercase;
+            color: var(--accent-light);
+            margin-top: 3px;
+        }
+
+        /* ── Nav ── */
+        .sidebar-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 10px;
+        }
+
+        .nav-group {
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 9.5px;
+            font-weight: 600;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            color: var(--t3);
+            padding: 10px 10px 5px;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 9px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--t2);
+            font-size: 14px;
+            font-weight: 500;
+            transition: background var(--ease), color var(--ease);
+            position: relative;
+            white-space: nowrap;
+            margin-bottom: 1px;
+        }
+
+            .nav-item:hover {
+                background: var(--bg-hover);
+                color: var(--t1);
+            }
+
+            .nav-item.active {
+                background: var(--bg-active);
+                color: var(--accent-light);
+            }
+
+                .nav-item.active::after {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 7px;
+                    bottom: 7px;
+                    width: 3px;
+                    border-radius: 0 3px 3px 0;
+                    background: var(--accent);
+                }
+
+        .nav-icon {
+            width: 20px;
+            font-size: 14.5px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .nav-badge {
+            flex-shrink: 0;
+            font-size: 10.5px;
+            font-weight: 600;
+            padding: 1px 7px;
+            border-radius: 20px;
+            line-height: 17px;
+        }
+
+        .badge-accent {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .badge-gold {
+            background: var(--gold-dim);
+            color: var(--gold);
+        }
+
+        .badge-danger {
+            background: rgba(239,68,68,.15);
+            color: #f87171;
+        }
+
+        .badge-muted {
+            background: rgba(255,255,255,.07);
+            color: var(--t3);
+        }
+
+        /* ── Separator ── */
+        .nav-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 8px 0;
+        }
+
+        /* ── User Footer ── */
+        .sidebar-footer {
+            padding: 12px 10px;
+            border-top: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .user-tile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background var(--ease);
+            overflow: hidden;
+        }
+
+            .user-tile:hover {
+                background: var(--bg-hover);
+            }
+
+        .avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .user-info {
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--t1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: var(--t3);
+            margin-top: 1px;
+        }
+
+        .logout-btn {
+            color: var(--t3);
+            font-size: 13px;
+            background: none;
+            border: none;
+            padding: 4px;
+            border-radius: 5px;
+            transition: color var(--ease);
+            flex-shrink: 0;
+        }
+
+            .logout-btn:hover {
+                color: #f87171;
+            }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   MAIN WRAPPER
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .layout-main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            transition: margin-left var(--ease);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   TOPBAR
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .topbar {
+            height: 68px;
+            background: var(--bg-topbar);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 28px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 6px rgba(0,0,0,.06);
+        }
+
+        /* Hamburger (mobile) */
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--t2);
+            border-radius: var(--radius-sm);
+            width: 36px;
+            height: 36px;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            transition: background var(--ease), color var(--ease);
+        }
+
+            .hamburger:hover {
+                background: var(--bg-hover);
+                color: var(--t1);
+            }
+
+        /* Page title */
+        .topbar-heading {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--t1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            color: var(--t3);
+            margin-top: 2px;
+        }
+
+            .breadcrumb a {
+                color: var(--t3);
+                transition: color var(--ease);
+            }
+
+                .breadcrumb a:hover {
+                    color: var(--accent-light);
+                }
+
+            .breadcrumb .sep {
+                font-size: 9px;
+            }
+
+        /* Action cluster */
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .search-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0 13px;
+            height: 36px;
+            min-width: 210px;
+            transition: border-color var(--ease);
+        }
+
+            .search-wrap:focus-within {
+                border-color: var(--accent);
+            }
+
+            .search-wrap i {
+                color: var(--t3);
+                font-size: 12px;
+                flex-shrink: 0;
+            }
+
+            .search-wrap input {
+                background: transparent;
+                border: none;
+                outline: none;
+                color: var(--t1);
+                font-family: inherit;
+                font-size: 13px;
+                width: 100%;
+            }
+
+                .search-wrap input::placeholder {
+                    color: var(--t3);
+                }
+
+        .icon-action {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--t2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: background var(--ease), color var(--ease);
+        }
+
+            .icon-action:hover {
+                background: var(--bg-hover);
+                color: var(--t1);
+            }
+
+        .notif-pip {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: 1.5px solid var(--bg-topbar);
+        }
+
+        .visit-btn {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 0 14px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--t2);
+            font-size: 13px;
+            font-weight: 500;
+            transition: background var(--ease), color var(--ease), border-color var(--ease);
+        }
+
+            .visit-btn:hover {
+                background: var(--bg-hover);
+                color: var(--t1);
+                border-color: var(--accent);
+            }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   PAGE CONTENT
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .page-content {
+            flex: 1;
+            padding: 32px 28px;
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   MOBILE OVERLAY
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,.35);
+            z-index: 190;
+            backdrop-filter: blur(2px);
+        }
+
+        /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                   RESPONSIVE
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+        @@media (max-width: 960px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+                .sidebar.is-open {
+                    transform: translateX(0);
+                    box-shadow: 4px 0 32px rgba(0,0,0,.15);
+                }
+
+            .overlay.is-open {
+                display: block;
+            }
+
+            .layout-main {
+                margin-left: 0;
+            }
+
+            .search-wrap {
+                display: none;
+            }
+
+            .visit-btn span {
+                display: none;
+            }
+
+            .visit-btn {
+                min-width: 36px;
+                padding: 0 10px;
+            }
+
+            .page-content {
+                padding: 24px 18px;
+            }
+        }
+        
+        @@media (max-width: 480px) {
+            .topbar {
+                padding: 0 16px;
+            }
+
+            .page-content {
+                padding: 20px 14px;
+            }
+        }
+    </style>
+
+    @* Sayfa bazlı stil eklentileri için *@
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         MOBİL OVERLAY
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════════════════════════════════ -->
+    <aside class="sidebar" id="sidebar">
+
+        <a href="/admin" class="sidebar-brand">
+            <div class="brand-mark">🌍</div>
+            <div class="brand-text">
+                <div class="brand-name">Vitour</div>
+                <span class="brand-tag">@localizer["Yönetim Paneli"]</span>
+            </div>
+        </a>
+
+        <div class="sidebar-scroll">
+
+            <div class="nav-group">
+                <div class="nav-label">@localizer["Genel"]</div>
+
+                <a href="/admin"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "dashboard" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                    <span class="nav-text">@localizer["Gösterge Paneli"]</span>
+                </a>
+            </div>
+
+            <div class="nav-sep"></div>
+
+            <div class="nav-group">
+                <div class="nav-label">@localizer["İçerik Yönetimi"]</div>
+
+                <a href="/Tour/TourList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "turlar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-map-location-dot"></i></span>
+                    <span class="nav-text">@localizer["Turlar"]</span>
+@*                     <span class="nav-badge badge-muted">24</span>
+ *@                </a>
+
+                <a href="/Category/CategoryList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "kategoriler" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-layer-group"></i></span>
+                    <span class="nav-text">@localizer["Kategoriler"]</span>
+                </a>
+
+                <a href="/Review/ReviewList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "yorumlar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-regular fa-star"></i></span>
+                    <span class="nav-text">@localizer["Yorumlar"]</span>
+@*                     <span class="nav-badge badge-gold">7</span>
+ *@                </a>
+                <a href="/TourPlan/AllTourPlan/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "tur planları" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-regular fa-star"></i></span>
+                    <span class="nav-text">@localizer["Tur Planları"]</span>
+                </a>
+                <a href="/Gallery/GalleryList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "galeri" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-regular fa-image"></i></span>
+                    <span class="nav-text">@localizer["Galeri"]</span>
+                </a>
+            </div>
+
+            <div class="nav-sep"></div>
+
+            <div class="nav-group">
+                <div class="nav-label">@localizer["İşlemler"]</div>
+
+                <a href="/Reservation/ReservationList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "rezervasyonlar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                    <span class="nav-text">@localizer["Rezervasyonlar"]</span>
+@*                     <span class="nav-badge badge-danger">3</span>
+ *@                </a>
+
+                @* <a href="/admin/kullanicilar"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "kullanicilar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+                    <span class="nav-text">Kullanıcılar</span>
+                </a> *@
+
+                <a href="/admin/odemeler"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "odemeler" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-credit-card"></i></span>
+                    <span class="nav-text">@localizer["Ödemeler"]</span>
+                </a>
+            </div>
+
+            <div class="nav-sep"></div>
+
+            <div class="nav-group">
+                <div class="nav-label">@localizer["Sistem"]</div>
+
+                <a href="/Report/ReportList/"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "raporlar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                    <span class="nav-text">@localizer["Raporlar"]</span>
+                </a>
+
+                <a href="/admin/ayarlar"
+                   class="nav-item @(ViewData["ActiveMenu"]?.ToString() == "ayarlar" ? "active" : "")">
+                    <span class="nav-icon"><i class="fa-solid fa-sliders"></i></span>
+                    <span class="nav-text">@localizer["Ayarlar"]</span>
+                </a>
+            </div>
+
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-tile">
+                <div class="avatar">A</div>
+                <div class="user-info">
+                    <div class="user-name">@(User?.Identity?.Name ?? "Admin")</div>
+                    <div class="user-role">@localizer["Yönetici"]</div>
+                </div>
+                <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="logout-btn" title="Çıkış Yap">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         ANA ALAN
+    ══════════════════════════════════════════════════════════════════ -->
+    <div class="layout-main">
+
+        <!-- ── TOPBAR ──────────────────────────────────────────── -->
+        <header class="topbar">
+
+            <button class="hamburger" onclick="openSidebar()" aria-label="Menüyü Aç">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+
+            <div class="topbar-heading">
+                <div class="topbar-title">@localizer[ViewData["Title"]?.ToString()??""]</div>
+                <nav class="breadcrumb" aria-label="Konum">
+                    <a href="/admin">Vitour</a>
+                    <span class="sep"><i class="fa-solid fa-chevron-right"></i></span>
+                    @* Sayfa bazlı breadcrumb: ViewData["Breadcrumb"] ile override edilebilir *@
+                    @localizer[(ViewData["Breadcrumb"]?.ToString() ?? ViewData["Title"]?.ToString() ?? "")]
+                </nav>
+            </div>
+
+            <div class="topbar-actions">
+
+                <div class="search-wrap">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="@localizer["Hızlı ara…"]" aria-label="Ara" />
+                </div>
+
+                <div class="lang-drop" id="langDrop">
+                    <div class="lang-trigger" onclick="toggleLangDrop()">
+                        <img id="lang-flag"
+                             src="https://flagcdn.com/24x18/@(currentCulture == "tr" ? "tr" : "gb").png"
+                             alt="@currentCulture.ToUpper()" />
+                        <span class="chevron">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                                      stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="lang-menu">
+                        <a class="lang-option @(currentCulture == "tr" ? "selected" : "")"
+                           href="@Url.Action("SetLanguage", "Language", new { culture = "tr", returnUrl = returnUrl })">
+                            <img src="https://flagcdn.com/24x18/tr.png" alt="TR" /> Türkçe
+                            <svg class="check" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 7l4 4 6-7" stroke="#1D9E75" stroke-width="1.8"
+                                      stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </a>
+                        <a class="lang-option @(currentCulture == "en" ? "selected" : "")"
+                           href="@Url.Action("SetLanguage", "Language", new { culture = "en", returnUrl = returnUrl })">
+                            <img src="https://flagcdn.com/24x18/gb.png" alt="EN" /> English
+                            <svg class="check" viewBox="0 0 14 14" fill="none">
+                                <path d="M2 7l4 4 6-7" stroke="#1D9E75" stroke-width="1.8"
+                                      stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+
+
+
+
+                <a href="/admin/bildirimler" class="icon-action" title="Bildirimler">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="notif-pip"></span>
+                </a>
+
+                <a href="/DefaultTour/TourList/" target="_blank" rel="noopener" class="visit-btn" title="Siteyi Görüntüle">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    <span>@localizer["Siteyi Gör"]</span>
+                </a>
+
+            </div>
+
+        </header>
+
+        <!-- ── SAYFA İÇERİĞİ ───────────────────────────────────── -->
+        <main class="page-content">
+            @RenderBody()
+        </main>
+
+    </div>
+    <style>
+        .lang-drop {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-trigger {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border: 0.5px solid rgba(0,0,0,0.2);
+            background: #fff;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            user-select: none;
+        }
+
+            .lang-trigger:hover {
+                background: #f5f5f5;
+                border-color: rgba(0,0,0,0.35);
+            }
+
+            .lang-trigger img {
+                width: 20px;
+                height: 15px;
+                border-radius: 2px;
+                display: block;
+            }
+
+            .lang-trigger .chevron {
+                display: flex;
+                align-items: center;
+                transition: transform 0.2s;
+                color: #888;
+            }
+
+        .lang-drop.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .lang-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            min-width: 130px;
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .lang-drop.open .lang-menu {
+            display: block;
+        }
+
+        .lang-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #222;
+            text-decoration: none;
+            transition: background 0.12s;
+        }
+
+            .lang-option:hover {
+                background: #f5f5f5;
+            }
+
+            .lang-option.selected {
+                background: #E1F5EE;
+                color: #085041;
+            }
+
+            .lang-option img {
+                width: 20px;
+                height: 15px;
+                border-radius: 2px;
+                display: block;
+            }
+
+            .lang-option .check {
+                margin-left: auto;
+                width: 14px;
+                height: 14px;
+                display: none;
+            }
+
+            .lang-option.selected .check {
+                display: block;
+            }
+    </style>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SCRIPTS
+    ══════════════════════════════════════════════════════════════════ -->
+    <script>
+        /* Sidebar mobil aç/kapat */
+        const sidebar  = document.getElementById('sidebar');
+        const overlay  = document.getElementById('sidebarOverlay');
+
+        function openSidebar()  {
+            sidebar.classList.add('is-open');
+            overlay.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('is-open');
+            overlay.classList.remove('is-open');
+            document.body.style.overflow = '';
+        }
+               function toggleLangDrop() {
+            document.getElementById('langDrop').classList.toggle('open');
+        }
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#langDrop')) {
+                document.getElementById('langDrop').classList.remove('open');
+            }
+        });
+            /* ESC tuşuyla kapat */
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeSidebar();
+        });
+    </script>
+
+    @* Sayfa bazlı script eklentileri için *@
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

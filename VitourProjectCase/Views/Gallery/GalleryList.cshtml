@@ -1,0 +1,967 @@
+﻿@model List<ResultGalleryDto>
+
+@{
+    ViewData["Title"] = "Galeri Yönetimi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "galeri";
+    ViewData["Breadcrumb"] = "Galeri";
+
+    var tours = ViewBag.Tours as List<ResultTourDto> ?? new List<ResultTourDto>();
+    var tourNames = tours.ToDictionary(t => t.TourId, t => t.Title);
+
+    var byTour = Model?
+        .GroupBy(g => g.TourId)
+        .ToDictionary(g => g.Key, g => g.ToList())
+        ?? new Dictionary<string, List<ResultGalleryDto>>();
+}
+
+<style>
+    /* ── Toolbar ──────────────────────────────────────────────── */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 13px 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 13px;
+        height: 38px;
+        min-width: 200px;
+        flex: 1;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    .filter-select {
+        height: 38px;
+        padding: 0 32px 0 12px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--t2);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition: border-color .18s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+    /* ── View toggle ──────────────────────────────────────────── */
+    .view-toggle {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .vt-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        transition: background .16s, color .16s;
+    }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .vt-btn:not(.active):hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+    /* ── Bulk bar ─────────────────────────────────────────────── */
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    /* ══ KART GORUNUMU ═══════════════════════════════════════════ */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 14px;
+    }
+
+    .gallery-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform .18s, box-shadow .18s;
+        position: relative;
+    }
+
+        .gallery-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.1);
+        }
+
+    .gc-img-wrap {
+        position: relative;
+        aspect-ratio: 4/3;
+        overflow: hidden;
+        background: linear-gradient(135deg, #e0f2fe, #bfdbfe);
+    }
+
+        .gc-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .3s;
+        }
+
+    .gallery-card:hover .gc-img-wrap img {
+        transform: scale(1.05);
+    }
+
+    .gc-img-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        color: #93c5fd;
+    }
+
+    /* Checkbox overlay */
+    .gc-cb-overlay {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 2;
+    }
+
+        .gc-cb-overlay input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+            background: #fff;
+            border-radius: 4px;
+            filter: drop-shadow(0 1px 3px rgba(0,0,0,.3));
+        }
+
+    /* Aksiyon overlay */
+    .gc-actions-overlay {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        z-index: 2;
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity .18s;
+    }
+
+    .gallery-card:hover .gc-actions-overlay {
+        opacity: 1;
+    }
+
+    .gc-action-btn {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        font-size: 11px;
+        cursor: pointer;
+        border: none;
+        transition: all .15s;
+        text-decoration: none;
+        backdrop-filter: blur(6px);
+    }
+
+        .gc-action-btn.preview {
+            background: rgba(255,255,255,.9);
+            color: var(--t2);
+        }
+
+            .gc-action-btn.preview:hover {
+                background: #fff;
+                color: var(--accent);
+            }
+
+        .gc-action-btn.del {
+            background: rgba(239,68,68,.85);
+            color: #fff;
+        }
+
+            .gc-action-btn.del:hover {
+                background: #dc2626;
+            }
+
+    /* Kart alt bilgi */
+    .gc-footer {
+        padding: 10px 12px;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .gc-tour-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--accent);
+        background: rgba(2,132,199,.08);
+        padding: 2px 8px;
+        border-radius: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+        flex: 1;
+    }
+
+    .gc-id {
+        font-size: 10.5px;
+        color: var(--t3);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+    }
+
+    /* ══ TABLO GORUNUMU ══════════════════════════════════════════ */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+    }
+
+    td {
+        padding: 11px 14px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 38px;
+        padding: 11px 6px 11px 14px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .thumb-cell {
+        width: 64px;
+    }
+
+        .thumb-cell img {
+            width: 56px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 7px;
+            background: linear-gradient(135deg,#e0f2fe,#bfdbfe);
+        }
+
+    .thumb-placeholder {
+        width: 56px;
+        height: 44px;
+        background: linear-gradient(135deg,#e0f2fe,#bfdbfe);
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #93c5fd;
+        font-size: 18px;
+    }
+
+    .url-trunc {
+        max-width: 260px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 12px;
+        color: var(--t3);
+    }
+
+    .tour-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--accent);
+        background: rgba(2,132,199,.08);
+        padding: 2px 9px;
+        border-radius: 12px;
+    }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    /* ── Lightbox ─────────────────────────────────────────────── */
+    .lightbox-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(0,0,0,.85);
+        backdrop-filter: blur(6px);
+        align-items: center;
+        justify-content: center;
+    }
+
+        .lightbox-overlay.open {
+            display: flex;
+        }
+
+    .lightbox-inner {
+        position: relative;
+        max-width: 90vw;
+        max-height: 85vh;
+    }
+
+        .lightbox-inner img {
+            max-width: 90vw;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: var(--radius);
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+
+    .lb-close {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: var(--t2);
+        box-shadow: 0 2px 8px rgba(0,0,0,.2);
+        transition: transform .15s;
+    }
+
+        .lb-close:hover {
+            transform: scale(1.1);
+        }
+
+    /* ── Boş durum ────────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 70px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 44px;
+            margin-bottom: 16px;
+            display: block;
+            opacity: .3;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+    @@media (max-width: 640px) {
+        .gallery-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Galeri</h1>
+        <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+            @(Model?.Count ?? 0) görsel · @tours.Count tur
+        </p>
+    </div>
+    <a href="/Gallery/CreateImage" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Görsel Ekle
+    </a>
+</div>
+
+<!-- ── Bulk bar ───────────────────────────────────────────────── -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> görsel seçildi</span>
+    <button class="btn-bulk-danger" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash"></i> Seçilenleri Sil
+    </button>
+    <button class="btn-ghost" style="height:34px;font-size:12px;" onclick="clearSel()">
+        <i class="fa-solid fa-xmark"></i> İptal
+    </button>
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="URL veya tur adında ara…" />
+    </div>
+
+    <select class="filter-select" id="tourFilter">
+        <option value="">Tüm Turlar</option>
+        @foreach (var t in tours)
+        {
+            <option value="@t.TourId">@t.Title</option>
+        }
+    </select>
+
+    <span style="font-size:12px;color:var(--t3);white-space:nowrap;">
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> görsel
+    </span>
+
+    <div class="view-toggle">
+        <button class="vt-btn active" id="btnGrid" onclick="setView('grid')" title="Kart Görünümü">
+            <i class="fa-solid fa-grip"></i>
+        </button>
+        <button class="vt-btn" id="btnTable" onclick="setView('table')" title="Tablo Görünümü">
+            <i class="fa-solid fa-table-list"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ══ KART GÖRÜNÜMÜ ═══════════════════════════════════════════ -->
+<div id="gridView">
+    @if (Model == null || !Model.Any())
+    {
+        <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+            <i class="fa-solid fa-images"></i>
+            <h3>Henüz görsel eklenmemiş</h3>
+            <p>Turlara ait görselleri buradan yönetebilirsiniz.</p>
+            <a href="/Gallery/CreateImage" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Görsel Ekle
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="gallery-grid" id="galleryGrid">
+            @foreach (var img in Model)
+            {
+                var tName = tourNames.ContainsKey(img.TourId) ? tourNames[img.TourId] : img.TourId;
+                <div class="gallery-card grid-item"
+                     data-tourid="@img.TourId"
+                     data-tourname="@(tName.ToLower())"
+                     data-url="@(img.ImageUrl?.ToLower() ?? "")">
+
+                    <div class="gc-img-wrap">
+                        <!-- Checkbox -->
+                        <div class="gc-cb-overlay">
+                            <input type="checkbox" class="row-cb" value="@img.GalleryId" />
+                        </div>
+
+                        <!-- Aksiyon butonları -->
+                        <div class="gc-actions-overlay">
+                            <button class="gc-action-btn preview"
+                                    onclick="openLightbox('@img.ImageUrl')" title="Önizle">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                            <form asp-action="DeleteImage" asp-controller="Gallery"
+                                  asp-route-id="@img.GalleryId" method="post"
+                                  style="display:inline;" id="del-@img.GalleryId">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="gc-action-btn del" title="Sil"
+                                        onclick="return confirm('Bu görseli silmek istediğinize emin misiniz?')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Görsel -->
+                        @if (!string.IsNullOrWhiteSpace(img.ImageUrl))
+                        {
+                            <img src="@img.ImageUrl" alt="Galeri görseli"
+                                 loading="lazy"
+                                 onerror="this.parentElement.innerHTML='<div class=\'gc-img-placeholder\'><i class=\'fa-solid fa-image\'></i></div>'" />
+                        }
+                        else
+                        {
+                            <div class="gc-img-placeholder"><i class="fa-solid fa-image"></i></div>
+                        }
+                    </div>
+
+                    <div class="gc-footer">
+                        <span class="gc-tour-tag" title="@tName">
+                            <i class="fa-solid fa-map-pin" style="font-size:9px;flex-shrink:0;"></i>
+                            @tName
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div id="noGridResults" style="display:none;margin-top:20px;">
+            <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı arama veya filtre deneyin.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- ══ TABLO GÖRÜNÜMÜ ══════════════════════════════════════════ -->
+<div id="tableView" style="display:none;">
+    <div class="table-card">
+        <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <div>
+                <span style="font-size:14px;font-weight:700;color:var(--t1);">Tüm Görseller</span>
+                <span style="font-size:12px;color:var(--t3);margin-left:8px;">@(Model?.Count ?? 0) kayıt</span>
+            </div>
+            <button class="btn-icon" style="width:32px;height:32px;" onclick="location.reload()" title="Yenile">
+                <i class="fa-solid fa-rotate-right"></i>
+            </button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="cb-cell" style="cursor:default;">
+                            <input type="checkbox" id="selectAll" />
+                        </th>
+                        <th style="cursor:default;">Görsel</th>
+                        <th class="hide-sm" style="cursor:default;">URL</th>
+                        <th style="cursor:default;">Tur</th>
+                        <th style="text-align:right;cursor:default;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var img in Model)
+                        {
+                            var tName = tourNames.ContainsKey(img.TourId) ? tourNames[img.TourId] : img.TourId;
+                            <tr class="table-item"
+                                data-tourid="@img.TourId"
+                                data-tourname="@tName.ToLower()"
+                                data-url="@img.ImageUrl.ToLower()">
+                                <td class="cb-cell">
+                                    <input type="checkbox" class="row-cb" value="@img.GalleryId" />
+                                </td>
+                                <td class="thumb-cell">
+                                    @if (!string.IsNullOrWhiteSpace(img.ImageUrl))
+                                    {
+                                        <img src="@img.ImageUrl" alt="görsel"
+                                             loading="lazy"
+                                             onerror="this.parentElement.innerHTML='<div class=\'thumb-placeholder\'><i class=\'fa-solid fa-image\'></i></div>'"
+                                             style="cursor:pointer;"
+                                             onclick="openLightbox('@img.ImageUrl')" />
+                                    }
+                                    else
+                                    {
+                                        <div class="thumb-placeholder"><i class="fa-solid fa-image"></i></div>
+                                    }
+                                </td>
+                                <td class="hide-sm">
+                                    <div class="url-trunc" title="@img.ImageUrl">@img.ImageUrl</div>
+                                </td>
+                                <td>
+                                    <span class="tour-badge">
+                                        <i class="fa-solid fa-map-pin" style="font-size:9px;"></i>
+                                        @tName
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-group">
+                                        <button class="btn-icon" title="Önizle"
+                                                onclick="openLightbox('@img.ImageUrl')"
+                                                style="color:var(--accent);border-color:rgba(2,132,199,.25);">
+                                            <i class="fa-solid fa-expand"></i>
+                                        </button>
+                                        <form asp-action="DeleteGallery" asp-controller="Gallery"
+                                              asp-route-id="@img.GalleryId" method="post"
+                                              style="display:inline;" id="del-t-@img.GalleryId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-icon danger" title="Sil"
+                                                    onclick="return confirm('Bu görseli silmek istediğinize emin misiniz?')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-images"></i>
+                                    <h3>Henüz görsel eklenmemiş</h3>
+                                    <p>Turlara ait görselleri buradan yönetebilirsiniz.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div id="noTableResults" style="display:none;">
+            <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı filtreler deneyin.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Lightbox ───────────────────────────────────────────────── -->
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+    <div class="lightbox-inner">
+        <button class="lb-close" onclick="closeLightbox()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="lightboxImg" src="" alt="Önizleme" />
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* ── Görünüm toggle ── */
+        function setView(v) {
+            document.getElementById('gridView').style.display  = v === 'grid'  ? 'block' : 'none';
+            document.getElementById('tableView').style.display = v === 'table' ? 'block' : 'none';
+            document.getElementById('btnGrid').classList.toggle('active',  v === 'grid');
+            document.getElementById('btnTable').classList.toggle('active', v === 'table');
+            localStorage.setItem('galleryView', v);
+            applyFilter();
+        }
+
+        (function(){ var s = localStorage.getItem('galleryView'); if (s) setView(s); })();
+
+        /* ── Görünüm toggle ── */
+        function setView(v) {
+            document.getElementById('gridView').style.display  = v === 'grid'  ? 'block' : 'none';
+            document.getElementById('tableView').style.display = v === 'table' ? 'block' : 'none';
+            document.getElementById('btnGrid').classList.toggle('active',  v === 'grid');
+            document.getElementById('btnTable').classList.toggle('active', v === 'table');
+            localStorage.setItem('galleryView', v);
+            applyFilter();
+        }
+
+        (function(){ var s = localStorage.getItem('galleryView'); if (s) setView(s); })();
+
+        /* ── Filtre ── */  // <-- DOMContentLoaded'dan ÇIKARDI
+        function applyFilter() {
+            var q   = document.getElementById('searchInput').value.toLowerCase().trim();
+            var tid = document.getElementById('tourFilter').value;
+            var cnt = 0;
+
+            document.querySelectorAll('.grid-item').forEach(function(el) {
+                var match = (!tid || el.dataset.tourid === tid)
+                         && (!q   || el.dataset.url.includes(q) || el.dataset.tourname.includes(q));
+                el.style.display = match ? '' : 'none';
+                if (match) cnt++;
+            });
+
+            document.querySelectorAll('.table-item').forEach(function(r) {
+                var match = (!tid || r.dataset.tourid === tid)
+                         && (!q   || r.dataset.url.includes(q) || r.dataset.tourname.includes(q));
+                r.style.display = match ? '' : 'none';
+            });
+
+            document.getElementById('visibleCount').textContent = cnt;
+
+            var ng = document.getElementById('noGridResults');
+            var nt = document.getElementById('noTableResults');
+            if (ng) ng.style.display = cnt === 0 ? 'block' : 'none';
+            if (nt) {
+                var tv = Array.from(document.querySelectorAll('.table-item'))
+                             .filter(function(r){ return r.style.display !== 'none'; }).length;
+                nt.style.display = tv === 0 ? 'block' : 'none';
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById('searchInput').addEventListener('input', applyFilter);
+            document.getElementById('tourFilter').addEventListener('change', applyFilter);
+        });        
+        /* ── Checkbox / bulk ── */
+        var bulkBar   = document.getElementById('bulkBar');
+        var bulkCount = document.getElementById('bulkCount');
+        var selectAll = document.getElementById('selectAll');
+
+        function updateBulk() {
+            var checked = document.querySelectorAll('.row-cb:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            if (selectAll) {
+                var all = document.querySelectorAll('.row-cb');
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = selectAll.checked; });
+                updateBulk();
+            });
+        }
+
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('.row-cb')) updateBulk();
+        });
+
+        function clearSel() {
+            document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = false; });
+            if (selectAll) selectAll.checked = false;
+            updateBulk();
+        }
+
+        function bulkDelete() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c){ return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' görseli kalıcı olarak silmek istediğinize emin misiniz?')) return;
+            console.log('Silinecek:', ids); // TODO: AJAX
+        }
+
+        /* ── Lightbox ── */
+        function openLightbox(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightbox').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox(e) {
+            if (e && e.target !== document.getElementById('lightbox') && !e.target.closest('.lb-close')) return;
+            document.getElementById('lightbox').classList.remove('open');
+            document.getElementById('lightboxImg').src = '';
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox({ target: document.getElementById('lightbox') });
+        });
+    </script>
+}

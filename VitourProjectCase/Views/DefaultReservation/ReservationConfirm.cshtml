@@ -1,0 +1,594 @@
+﻿@model GetReservationByIdDto
+
+@{
+    ViewData["Title"] = "Rezervasyon Onaylandı";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rezervasyon Onaylandı – Vitour</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #f7f9fc;
+            color: #222;
+        }
+
+        :root {
+            --green: #3fa535;
+            --green-dark: #2d8026;
+            --green-light: #e8f5e3;
+            --gold: #e8a000;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --radius: 14px;
+            --shadow: 0 2px 20px rgba(0,0,0,.08);
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .page-wrap {
+            padding: 60px 0 80px;
+        }
+
+        /* ── Confetti animasyonu ──────────────────────────────────────── */
+        @@keyframes confettiFall {
+            0%
+
+        {
+            transform: translateY(-20px) rotate(0deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(80px) rotate(360deg);
+            opacity: 0;
+        }
+
+        }
+        @@keyframes scaleIn {
+            0%
+
+        {
+            transform: scale(.5);
+            opacity: 0;
+        }
+
+        70% {
+            transform: scale(1.1);
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        }
+        @@keyframes fadeUp {
+            from
+
+        {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        }
+        @@keyframes pulse-ring {
+            0%
+
+        {
+            transform: scale(1);
+            opacity: .6;
+        }
+
+        100% {
+            transform: scale(1.6);
+            opacity: 0;
+        }
+
+        }
+
+        /* ── Başarı başlık ────────────────────────────────────────────── */
+        .success-top {
+            text-align: center;
+            padding: 48px 24px 40px;
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            animation: fadeUp .5s ease both;
+        }
+
+            .success-top::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 5px;
+                background: linear-gradient(90deg, var(--green), #7ee68e, var(--green));
+            }
+
+        .check-wrap {
+            position: relative;
+            width: 90px;
+            height: 90px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .check-ring {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid var(--green);
+            animation: pulse-ring 1.4s ease-out infinite;
+        }
+
+        .check-icon {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green), #5cc44f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(63,165,53,.4);
+            animation: scaleIn .5s cubic-bezier(.34,1.56,.64,1) .1s both;
+            position: relative;
+            z-index: 1;
+        }
+
+        .success-title {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(22px, 5vw, 30px);
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 10px;
+        }
+
+        .success-sub {
+            font-size: 15px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+            .success-sub strong {
+                color: var(--text);
+            }
+
+        /* Rezervasyon kodu */
+        .res-code-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--green-light);
+            border: 1.5px dashed var(--green);
+            border-radius: 10px;
+            padding: 12px 24px;
+            margin-top: 20px;
+        }
+
+        .res-code-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .res-code-value {
+            font-size: 24px;
+            font-weight: 900;
+            font-family: monospace;
+            color: var(--green);
+            letter-spacing: 3px;
+        }
+
+        /* ── Detay kartı ──────────────────────────────────────────────── */
+        .detail-card {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            margin-bottom: 20px;
+            animation: fadeUp .5s ease .15s both;
+        }
+
+        .detail-card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .detail-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: var(--green-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green);
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .detail-card-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .detail-card-body {
+            padding: 0;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            padding: 14px 24px;
+            border-bottom: 1px solid #f3f4f6;
+            gap: 14px;
+        }
+
+            .info-row:last-child {
+                border-bottom: none;
+            }
+
+        .info-row-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #f8fafb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--green);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .info-row-label {
+            font-size: 12.5px;
+            color: var(--muted);
+            flex: 1;
+        }
+
+        .info-row-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            text-align: right;
+        }
+
+            .info-row-value.green {
+                color: var(--green);
+                font-size: 17px;
+            }
+
+            .info-row-value.code {
+                font-family: monospace;
+                font-size: 16px;
+                color: #7c3aed;
+                letter-spacing: 1.5px;
+            }
+
+        /* ── Sonraki adımlar ──────────────────────────────────────────── */
+        .steps-card {
+            background: #fff;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 20px;
+            animation: fadeUp .5s ease .25s both;
+        }
+
+        .steps-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .steps-title i {
+                color: var(--green);
+            }
+
+        .next-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+            .next-step:last-child {
+                margin-bottom: 0;
+            }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--green);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+        }
+
+        .step-text strong {
+            font-size: 13.5px;
+            color: var(--text);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .step-text span {
+            font-size: 12.5px;
+            color: var(--muted);
+        }
+
+        /* ── Aksiyonlar ───────────────────────────────────────────────── */
+        .action-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            animation: fadeUp .5s ease .35s both;
+        }
+
+        .btn-green {
+            flex: 1;
+            min-width: 160px;
+            height: 48px;
+            background: var(--green);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background .2s, transform .15s, box-shadow .2s;
+            box-shadow: 0 4px 14px rgba(63,165,53,.3);
+        }
+
+            .btn-green:hover {
+                background: var(--green-dark);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(63,165,53,.4);
+            }
+
+        .btn-outline {
+            flex: 1;
+            min-width: 160px;
+            height: 48px;
+            background: transparent;
+            color: var(--green);
+            border: 2px solid var(--green);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all .18s;
+        }
+
+            .btn-outline:hover {
+                background: var(--green);
+                color: #fff;
+            }
+
+        /* ── Print stili ──────────────────────────────────────────────── */
+        @@media print {
+            body {
+                background: #fff;
+            }
+
+            .action-row, .steps-card {
+                display: none;
+            }
+
+            .success-top, .detail-card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+
+            .check-ring {
+                display: none;
+            }
+        }
+
+        @@media (max-width: 520px) {
+            .info-row {
+                flex-wrap: wrap;
+            }
+
+            .info-row-value {
+                text-align: left;
+            }
+
+            .res-code-value {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container page-wrap">
+
+        <!-- ── Başarı başlığı ───────────────────────────────────────── -->
+        <div class="success-top">
+            <div class="check-wrap">
+                <div class="check-ring"></div>
+                <div class="check-icon"><i class="fa-solid fa-check"></i></div>
+            </div>
+
+            <h1 class="success-title">Rezervasyonunuz Onaylandı!</h1>
+            <p class="success-sub">
+                Merhaba <strong>@Model.NameSurname</strong>, rezervasyonunuz başarıyla oluşturuldu.<br />
+                Onay bilgileri <strong>@Model.Email</strong> adresine gönderildi.
+            </p>
+
+            <div class="res-code-box">
+                <div>
+                    <div class="res-code-label">Rezervasyon Kodunuz</div>
+                    <div class="res-code-value">@Model.ReservationCode</div>
+                </div>
+                <button onclick="copyCode()" title="Kopyala"
+                        style="background:var(--green);border:none;color:#fff;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:6px;">
+                    <i class="fa-regular fa-copy" id="copyIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Rezervasyon Detayları ─────────────────────────────────── -->
+        <div class="detail-card">
+            <div class="detail-card-header">
+                <div class="detail-icon"><i class="fa-solid fa-calendar-check"></i></div>
+                <div>
+                    <div class="detail-card-title">Rezervasyon Detayları</div>
+                </div>
+            </div>
+            <div class="detail-card-body">
+
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-solid fa-user"></i></div>
+                    <span class="info-row-label">Ad Soyad</span>
+                    <span class="info-row-value">@Model.NameSurname</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <span class="info-row-label">E-posta</span>
+                    <span class="info-row-value">@Model.Email</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-solid fa-users"></i></div>
+                    <span class="info-row-label">Kişi Sayısı</span>
+                    <span class="info-row-value">@Model.PersonCount kişi</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-regular fa-calendar"></i></div>
+                    <span class="info-row-label">Rezervasyon Tarihi</span>
+                    <span class="info-row-value">@Model.ReservationDate.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("tr-TR"))</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-solid fa-turkish-lira-sign"></i></div>
+                    <span class="info-row-label">Toplam Tutar</span>
+                    <span class="info-row-value green">@Model.TotalPrice.ToString("N0") ₺</span>
+                </div>
+                <div class="info-row">
+                    <div class="info-row-icon"><i class="fa-solid fa-key"></i></div>
+                    <span class="info-row-label">Rezervasyon Kodu</span>
+                    <span class="info-row-value code">@Model.ReservationCode</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sonraki Adımlar ───────────────────────────────────────── -->
+        <div class="steps-card">
+            <div class="steps-title"><i class="fa-solid fa-list-check"></i> Sonraki Adımlar</div>
+            <div class="next-step">
+                <div class="step-num">1</div>
+                <div class="step-text">
+                    <strong>E-postanızı Kontrol Edin</strong>
+                    <span>Onay ve detay bilgileri <strong>@Model.Email</strong> adresine gönderildi.</span>
+                </div>
+            </div>
+            <div class="next-step">
+                <div class="step-num">2</div>
+                <div class="step-text">
+                    <strong>Rezervasyon Kodunuzu Saklayın</strong>
+                    <span>Tur günü bu kodu yanınızda bulundurun: <strong style="font-family:monospace;color:#7c3aed;">@Model.ReservationCode</strong></span>
+                </div>
+            </div>
+            <div class="next-step">
+                <div class="step-num">3</div>
+                <div class="step-text">
+                    <strong>Hazırlıklarınızı Yapın</strong>
+                    <span>Tur gününden 1 gün önce sizi bilgilendireceğiz. Sorularınız için 7/24 destek hattımız açık.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Butonlar ──────────────────────────────────────────────── -->
+        <div class="action-row">
+            <a href="/" class="btn-green">
+                <i class="fa-solid fa-house"></i> Ana Sayfaya Dön
+            </a>
+            <a href="/Tour" class="btn-outline">
+                <i class="fa-solid fa-map"></i> Diğer Turları Keşfet
+            </a>
+            <button onclick="window.print()" class="btn-outline">
+                <i class="fa-solid fa-print"></i> Yazdır
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        function copyCode() {
+            var code = '@Model.ReservationCode';
+            navigator.clipboard.writeText(code).then(function() {
+                var icon = document.getElementById('copyIcon');
+                icon.className = 'fa-solid fa-check';
+                setTimeout(function() { icon.className = 'fa-regular fa-copy'; }, 2000);
+            }).catch(function() {
+                /* fallback */
+                var ta = document.createElement('textarea');
+                ta.value = code; document.body.appendChild(ta);
+                ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            });
+        }
+    </script>
+
+</body>
+</html>

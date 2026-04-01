@@ -1,0 +1,610 @@
+﻿@model CreateCategoryDto
+
+@{
+    ViewData["Title"] = "Yeni Kategori Ekle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "kategoriler";
+    ViewData["Breadcrumb"] = "Kategoriler / Yeni";
+}
+
+<style>
+    /* ── İki sütun grid ───────────────────────────────────────── */
+    .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ── Kart ─────────────────────────────────────────────────── */
+    .v-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .v-card-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .v-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        background: var(--accent-glow);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .v-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .v-card-sub {
+        font-size: 12px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-body {
+        padding: 26px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .form-label .req {
+            color: #ef4444;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+    .form-hint {
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--t1);
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color .18s, box-shadow .18s;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #fff;
+        }
+
+        .form-control::placeholder {
+            color: var(--t3);
+        }
+
+        .form-control.input-validation-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,.10);
+        }
+
+    /* Sadece içi doluyken görün */
+    .field-validation-error:empty {
+        display: none !important;
+    }
+
+    .field-validation-error:not(:empty) {
+        font-size: 12px;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .field-validation-error:not(:empty)::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+    /* ── Toggle ───────────────────────────────────────────────── */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 18px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        gap: 16px;
+        transition: border-color .18s, background .18s;
+        user-select: none;
+    }
+
+        .toggle-row:has(.toggle-input:checked) {
+            border-color: var(--accent);
+            background: #f0f8ff;
+        }
+
+    .toggle-label-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .toggle-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .toggle-desc {
+        font-size: 12px;
+        color: var(--t3);
+    }
+
+    .toggle-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 46px;
+        height: 26px;
+        border-radius: 99px;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background .2s;
+        position: relative;
+        display: block;
+        flex-shrink: 0;
+    }
+
+        .toggle-input::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.2);
+            transition: transform .2s;
+        }
+
+        .toggle-input:checked {
+            background: var(--accent);
+        }
+
+            .toggle-input:checked::after {
+                transform: translateX(20px);
+            }
+
+    /* ── Validation Summary ───────────────────────────────────── */
+    .alert-danger {
+        padding: 13px 16px;
+        background: rgba(239,68,68,.06);
+        border: 1px solid rgba(239,68,68,.2);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: #b91c1c;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .alert-danger i {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-danger ul {
+            margin: 4px 0 0 14px;
+        }
+
+        .alert-danger li {
+            margin-bottom: 2px;
+        }
+
+    /* ── Form footer ──────────────────────────────────────────── */
+    .form-footer {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 20px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            box-shadow: 0 4px 16px rgba(2,132,199,.28);
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+            border-color: #94a3b8;
+        }
+
+    /* ── Sağ panel ────────────────────────────────────────────── */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Canlı önizleme kutusu */
+    .preview-box {
+        margin: 20px;
+        padding: 20px 16px;
+        background: var(--bg-canvas);
+        border: 1.5px dashed #cbd5e1;
+        border-radius: var(--radius-sm);
+        text-align: center;
+    }
+
+    .preview-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+        margin-bottom: 10px;
+        min-height: 22px;
+        word-break: break-word;
+    }
+
+    .preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all .2s;
+    }
+
+        .preview-badge.is-active {
+            background: rgba(34,197,94,.12);
+            color: #16a34a;
+        }
+
+        .preview-badge.is-inactive {
+            background: rgba(148,163,184,.12);
+            color: #64748b;
+        }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dot-on {
+        background: #22c55e;
+    }
+
+    .dot-off {
+        background: #94a3b8;
+    }
+
+    .preview-sub {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 8px;
+    }
+
+    /* İpuçları */
+    .tip-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 18px 20px 20px;
+    }
+
+    .tip-item {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .tip-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent-glow);
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .tip-text {
+        font-size: 13px;
+        color: var(--t2);
+        line-height: 1.5;
+    }
+
+        .tip-text strong {
+            color: var(--t1);
+            display: block;
+            margin-bottom: 2px;
+        }
+
+    /* Mevcut kategoriler */
+    .cat-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px 20px 6px;
+    }
+
+    .cat-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        background: var(--bg-canvas);
+        border: 1px solid var(--border);
+        color: var(--t2);
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @@media (max-width: 900px) {
+        .create-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h1 style="font-size:20px; font-weight:700; color:var(--t1);">Yeni Kategori Ekle</h1>
+        <p style="font-size:13px; color:var(--t3); margin-top:4px;">
+            Tur kategorisi oluşturun ve yayın durumunu belirleyin.
+        </p>
+    </div>
+    <a href="/Category/CategoryList/" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-left"></i> Geri Dön
+    </a>
+</div>
+
+<!-- ── İki Sütun ────────────────────────────────────────────────── -->
+<div class="create-grid">
+
+    <!-- ══ SOL — Form ══════════════════════════════════════════ -->
+    <div class="v-card">
+
+        <div class="v-card-header">
+            <div class="v-card-icon">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div>
+                <div class="v-card-title">Kategori Bilgileri</div>
+                <div class="v-card-sub">
+                    Yıldızlı (<span style="color:#ef4444;">*</span>) alanlar zorunludur.
+                </div>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div class="form-body">
+
+                <!-- Validation Summary -->
+                <div asp-validation-summary="ModelOnly" class="alert-danger" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <strong>Lütfen aşağıdaki hataları düzeltin:</strong>
+                        <ul></ul>
+                    </div>
+                </div>
+
+                <!-- Kategori Adı -->
+                <div class="form-group">
+                    <label asp-for="CategoryName" class="form-label">
+                        <i class="fa-solid fa-tag" style="color:var(--accent); font-size:12px;"></i>
+                        Kategori Adı
+                        <span class="req">*</span>
+                    </label>
+                    <input asp-for="CategoryName"
+                           class="form-control"
+                           id="catNameInput"
+                           placeholder="Örn: Kültür Turları, Doğa Turları…"
+                           autocomplete="off"
+                           maxlength="100" />
+                    <span asp-validation-for="CategoryName" class="field-validation-error"></span>
+                    <span class="form-hint">En fazla 100 karakter. Kısa ve açıklayıcı bir isim seçin.</span>
+                </div>
+
+                <!-- Durum -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-toggle-on" style="color:var(--accent); font-size:12px;"></i>
+                        Yayın Durumu
+                    </label>
+                    <label class="toggle-row" for="CategoryStatus">
+                        <div class="toggle-label-group">
+                            <span class="toggle-title">Kategoriyi Yayına Al</span>
+                            <span class="toggle-desc">
+                                Aktif kategoriler sitede listelenir ve turlara atanabilir.
+                            </span>
+                        </div>
+                        <input asp-for="CategoryStatus"
+                               type="checkbox"
+                               class="toggle-input"
+                               id="CategoryStatus" />
+                    </label>
+                    <span asp-validation-for="CategoryStatus" class="field-validation-error"></span>
+                </div>
+
+            </div>
+
+            <div class="form-footer">
+                <a href="/admin/kategoriler" class="btn btn-ghost">
+                    <i class="fa-solid fa-xmark"></i> İptal
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-floppy-disk"></i> Kategoriyi Kaydet
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ══ SAĞ — Bilgi Paneli ═══════════════════════════════════ -->
+    <div class="side-panel">
+
+        <!-- 2. İpuçları -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(245,158,11,.1); color:#f59e0b;">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">İpuçları</div>
+                    <div class="v-card-sub">Daha iyi kategoriler için öneriler</div>
+                </div>
+            </div>
+            <ul class="tip-list">
+                <li class="tip-item">
+                    <span class="tip-num">1</span>
+                    <span class="tip-text">
+                        <strong>Kısa ve net isimler</strong>
+                        "Turlar" yerine "Kültür Turları" gibi spesifik isimler arama motorlarında daha iyi sıralanır.
+                    </span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-num">2</span>
+                    <span class="tip-text">
+                        <strong>Yayın durumu</strong>
+                        İçerik hazır değilse pasif bırakabilirsiniz; turu kategoriye atamadan önce aktif edin.
+                    </span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-num">3</span>
+                    <span class="tip-text">
+                        <strong>Çakışan isimlerden kaçının</strong>
+                        "Doğa" ve "Doğa Turları" gibi benzer isimler kullanıcıda kafa karışıklığı yaratır.
+                    </span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- 3. Mevcut Kategoriler -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(34,197,94,.1); color:#16a34a;">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Mevcut Kategoriler</div>
+                    <div class="v-card-sub">Sistemde kayıtlı kategoriler</div>
+                </div>
+            </div>
+            <div class="cat-chips">
+                @foreach (var item in ViewBag.categories)
+                {
+                    <span class="cat-chip"><span class="dot dot-on"></span>@item.CategoryName</span>
+                }
+            </div>
+            <div style="padding: 10px 20px 18px;">
+                <a href="/Category/CategoryList/"
+                   style="font-size:12.5px; color:var(--accent); font-weight:600; text-decoration:none;">
+                    Tüm kategorileri yönet <i class="fa-solid fa-arrow-right" style="font-size:10px;"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        /* ── Validation summary: sadece hata varsa göster ── */
+        (function () {
+            const s = document.querySelector('[data-valmsg-summary]');
+            if (s && s.querySelectorAll('li').length > 0) s.style.display = 'flex';
+        })();
+
+    </script>
+}

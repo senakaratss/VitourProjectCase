@@ -1,0 +1,761 @@
+﻿@model GetCategoryByIdDto
+
+@{
+    ViewData["Title"] = "Kategori Düzenle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "kategoriler";
+    ViewData["Breadcrumb"] = "Kategoriler / Düzenle";
+}
+
+<style>
+    .edit-grid {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    /* ── Kart ─────────────────────────────────────────────────── */
+    .v-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .v-card-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .v-card-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .v-card-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .v-card-sub {
+        font-size: 12px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-body {
+        padding: 26px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .form-label .req {
+            color: #ef4444;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+    .form-hint {
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--t1);
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color .18s, box-shadow .18s;
+        outline: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #fff;
+        }
+
+        .form-control::placeholder {
+            color: var(--t3);
+        }
+
+        .form-control.input-validation-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,.10);
+        }
+
+    .field-validation-error:empty {
+        display: none !important;
+    }
+
+    .field-validation-error:not(:empty) {
+        font-size: 12px;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .field-validation-error:not(:empty)::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+    /* ── ID alanı (readonly) ──────────────────────────────────── */
+    .id-field {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 42px;
+        padding: 0 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: #f8fafc;
+        font-size: 13.5px;
+        color: var(--t3);
+        font-family: 'Courier New', monospace;
+        letter-spacing: .5px;
+    }
+
+        .id-field i {
+            font-size: 11px;
+            color: var(--t3);
+        }
+
+    /* ── Toggle ───────────────────────────────────────────────── */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 18px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        gap: 16px;
+        transition: border-color .18s, background .18s;
+        user-select: none;
+    }
+
+        .toggle-row:has(.toggle-input:checked) {
+            border-color: var(--accent);
+            background: #f0f8ff;
+        }
+
+    .toggle-label-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .toggle-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .toggle-desc {
+        font-size: 12px;
+        color: var(--t3);
+    }
+
+    .toggle-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 46px;
+        height: 26px;
+        border-radius: 99px;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background .2s;
+        position: relative;
+        display: block;
+        flex-shrink: 0;
+    }
+
+        .toggle-input::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.2);
+            transition: transform .2s;
+        }
+
+        .toggle-input:checked {
+            background: var(--accent);
+        }
+
+            .toggle-input:checked::after {
+                transform: translateX(20px);
+            }
+
+    /* ── Değişiklik uyarısı ───────────────────────────────────── */
+    .change-alert {
+        display: none;
+        align-items: center;
+        gap: 9px;
+        padding: 10px 14px;
+        background: rgba(245,158,11,.07);
+        border: 1px solid rgba(245,158,11,.25);
+        border-radius: var(--radius-sm);
+        font-size: 12.5px;
+        color: #92400e;
+    }
+
+        .change-alert.visible {
+            display: flex;
+        }
+
+        .change-alert i {
+            color: #f59e0b;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+    /* ── Validation summary ───────────────────────────────────── */
+    .alert-danger {
+        padding: 13px 16px;
+        background: rgba(239,68,68,.06);
+        border: 1px solid rgba(239,68,68,.2);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: #b91c1c;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .alert-danger i {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-danger ul {
+            margin: 4px 0 0 14px;
+        }
+
+        .alert-danger li {
+            margin-bottom: 2px;
+        }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .form-footer {
+        padding: 18px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 18px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            box-shadow: 0 4px 16px rgba(2,132,199,.28);
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-danger-soft {
+        background: rgba(239,68,68,.07);
+        border: 1.5px solid rgba(239,68,68,.2);
+        color: #dc2626;
+    }
+
+        .btn-danger-soft:hover {
+            background: rgba(239,68,68,.14);
+            border-color: rgba(239,68,68,.35);
+        }
+
+    /* ── Sağ panel ────────────────────────────────────────────── */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Önizleme */
+    .preview-box {
+        margin: 20px;
+        padding: 22px 16px;
+        background: var(--bg-canvas);
+        border: 1.5px dashed #cbd5e1;
+        border-radius: var(--radius-sm);
+        text-align: center;
+    }
+
+    .preview-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        margin: 0 auto 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        font-weight: 800;
+        background: #dbeafe;
+        color: #2563eb;
+        transition: background .2s;
+        letter-spacing: 0;
+    }
+
+    .preview-name {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+        margin-bottom: 10px;
+        min-height: 22px;
+        word-break: break-word;
+    }
+
+    .preview-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all .2s;
+    }
+
+        .preview-badge.is-active {
+            background: rgba(34,197,94,.12);
+            color: #16a34a;
+        }
+
+        .preview-badge.is-inactive {
+            background: rgba(148,163,184,.12);
+            color: #64748b;
+        }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .dot-on {
+        background: #22c55e;
+    }
+
+    .dot-off {
+        background: #94a3b8;
+    }
+
+    .preview-sub {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 10px;
+    }
+
+    /* Meta bilgi */
+    .meta-list {
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 13px;
+    }
+
+    .meta-key {
+        color: var(--t3);
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+        .meta-key i {
+            width: 14px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+    .meta-val {
+        font-weight: 600;
+        color: var(--t1);
+        text-align: right;
+    }
+
+    .meta-sep {
+        height: 1px;
+        background: var(--border);
+    }
+
+    /* Silme zone */
+    .danger-zone {
+        padding: 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .danger-zone p {
+            font-size: 12.5px;
+            color: var(--t3);
+            line-height: 1.5;
+        }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @@media (max-width: 900px) {
+        .edit-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:26px; flex-wrap:wrap; gap:12px;">
+    <div style="display:flex; align-items:center; gap:14px;">
+        <a href="/Category/CategoryList/" class="btn btn-ghost" style="height:38px; padding:0 14px;">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 style="font-size:20px; font-weight:700; color:var(--t1);">Kategori Düzenle</h1>
+            <p style="font-size:13px; color:var(--t3); margin-top:3px;">
+                <strong style="color:var(--t2);" id="pageCatName">@Model?.CategoryName</strong>
+                kategorisini düzenliyorsunuz.
+            </p>
+        </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+        <a href="/Category/CategoryList/" class="btn btn-ghost">
+            <i class="fa-solid fa-xmark"></i> İptal
+        </a>
+    </div>
+</div>
+
+<!-- ── İki Sütun ────────────────────────────────────────────────── -->
+<div class="edit-grid">
+
+    <!-- ══ SOL — Form ══════════════════════════════════════════ -->
+    <div class="v-card">
+
+        <div class="v-card-header">
+            <div class="v-card-icon" style="background:rgba(2,132,199,.1); color:var(--accent);">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <div>
+                <div class="v-card-title">Kategori Bilgileri</div>
+                <div class="v-card-sub">
+                    Yıldızlı (<span style="color:#ef4444;">*</span>) alanlar zorunludur.
+                </div>
+            </div>
+        </div>
+
+        <form method="post" novalidate id="editForm">
+            @Html.AntiForgeryToken()
+
+            <div class="form-body">
+
+                <!-- Validation Summary -->
+                <div asp-validation-summary="ModelOnly" class="alert-danger" style="display:none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <strong>Lütfen aşağıdaki hataları düzeltin:</strong>
+                        <ul></ul>
+                    </div>
+                </div>
+
+                <!-- Değişiklik uyarısı -->
+                <div class="change-alert" id="changeAlert">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Kaydedilmemiş değişiklikleriniz var.
+                </div>
+
+                <!-- Kategori ID (readonly gösterim + hidden input) -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-fingerprint" style="color:var(--accent); font-size:12px;"></i>
+                        Kategori ID
+                    </label>
+                    <div class="id-field">
+                        <i class="fa-solid fa-lock"></i>
+                        @Model?.CategoryId
+                    </div>
+                    <input type="hidden" asp-for="CategoryId" />
+                    <span class="form-hint">ID otomatik atanmıştır, değiştirilemez.</span>
+                </div>
+
+                <!-- Kategori Adı -->
+                <div class="form-group">
+                    <label asp-for="CategoryName" class="form-label">
+                        <i class="fa-solid fa-tag" style="color:var(--accent); font-size:12px;"></i>
+                        Kategori Adı
+                        <span class="req">*</span>
+                    </label>
+                    <input asp-for="CategoryName"
+                           class="form-control"
+                           id="catNameInput"
+                           placeholder="Örn: Kültür Turları, Doğa Turları…"
+                           autocomplete="off"
+                           maxlength="100" />
+                    <span asp-validation-for="CategoryName" class="field-validation-error"></span>
+                    <span class="form-hint">En fazla 100 karakter.</span>
+                </div>
+
+                <!-- Durum -->
+                <div class="form-group">
+                    <label class="form-label">
+                        <i class="fa-solid fa-toggle-on" style="color:var(--accent); font-size:12px;"></i>
+                        Yayın Durumu
+                    </label>
+                    <label class="toggle-row" for="CategoryStatus">
+                        <div class="toggle-label-group">
+                            <span class="toggle-title">Kategoriyi Yayına Al</span>
+                            <span class="toggle-desc">
+                                Aktif kategoriler sitede listelenir ve turlara atanabilir.
+                            </span>
+                        </div>
+                        <input asp-for="CategoryStatus"
+                               type="checkbox"
+                               class="toggle-input"
+                               id="CategoryStatus" />
+                    </label>
+                    <span asp-validation-for="CategoryStatus" class="field-validation-error"></span>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="form-footer">
+                <div class="footer-left">
+                    <a href="/Category/CategoryList/" class="btn btn-ghost">
+                        <i class="fa-solid fa-xmark"></i> İptal
+                    </a>
+                </div>
+                <button type="submit" class="btn btn-primary" id="saveBtn">
+                    <i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ══ SAĞ — Bilgi Paneli ═══════════════════════════════════ -->
+    <div class="side-panel">
+
+        <!-- 2. Kayıt Bilgileri -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(34,197,94,.1); color:#16a34a;">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Kayıt Bilgileri</div>
+                    <div class="v-card-sub">Bu kategoriye ait meta veriler</div>
+                </div>
+            </div>
+            <div class="meta-list">
+                <div class="meta-row">
+                    <span class="meta-key">
+                        <i class="fa-solid fa-id-badge"></i> Kategori ID
+                    </span>
+                    <span class="meta-val" style="font-family:monospace; font-size:12px; color:var(--t3);">
+                        @Model?.CategoryId
+                    </span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key">
+                        <i class="fa-solid fa-map-location-dot"></i> Tur Sayısı
+                    </span>
+                    <span class="meta-val">
+                        @* ViewBag.TourCount ile doldurulacak *@
+                        <span style="background:rgba(2,132,199,.1); color:var(--accent); padding:2px 10px; border-radius:20px; font-size:12px;">
+                            @(ViewBag.TourCount ?? 0) Tur
+                        </span>
+                    </span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key">
+                        <i class="fa-regular fa-calendar"></i> Oluşturulma
+                    </span>
+                    <span class="meta-val" style="font-size:12.5px;">
+                        @* @Model?.CreatedAt.ToString("dd MMM yyyy") *@
+                        —
+                    </span>
+                </div>
+                <div class="meta-sep"></div>
+                <div class="meta-row">
+                    <span class="meta-key">
+                        <i class="fa-regular fa-clock"></i> Son Güncelleme
+                    </span>
+                    <span class="meta-val" style="font-size:12.5px;">
+                        @* @Model?.UpdatedAt.ToString("dd MMM yyyy HH:mm") *@
+                        —
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Tehlikeli Alan -->
+        <div class="v-card" style="border-color: rgba(239,68,68,.18);">
+            <div class="v-card-header" style="border-color: rgba(239,68,68,.1);">
+                <div class="v-card-icon" style="background:rgba(239,68,68,.08); color:#dc2626;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div class="v-card-title" style="color:#dc2626;">Tehlikeli Alan</div>
+                    <div class="v-card-sub">Bu işlemler geri alınamaz</div>
+                </div>
+            </div>
+            <div class="danger-zone">
+                <p>
+                    Bu kategoriyi sildiğinizde, kategoriye bağlı turlar kategorisiz kalır.
+                    Bu işlem <strong>geri alınamaz.</strong>
+                </p>
+                @{
+                    var deleteMsgJs = $"'{Model?.CategoryName}' kategorisini kalıcı olarak silmek istediğinize emin misiniz?";
+                }
+                <form asp-action="DeleteCategory" asp-controller="Category"
+                      asp-route-id="@Model?.CategoryId"
+                      method="post"
+                      onsubmit="return confirm('@Model?.CategoryName kategorisini silmek istediğinize emin misiniz?')">
+                    @Html.AntiForgeryToken()
+                    <button type="submit"
+                            class="btn btn-danger-soft" style="width:100%; justify-content:center;">
+                        <i class="fa-solid fa-trash"></i> Kategoriyi Sil
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        /* ── Validation summary ── */
+        (function () {
+            const s = document.querySelector('[data-valmsg-summary]');
+            if (s && s.querySelectorAll('li').length > 0) s.style.display = 'flex';
+        })();
+
+        /* ── Orijinal değerleri sakla ── */
+        const origName   = document.getElementById('catNameInput').value;
+        const origStatus = document.getElementById('CategoryStatus').checked;
+
+        /* ── Değişiklik takibi ── */
+        const changeAlert = document.getElementById('changeAlert');
+        const saveBtn     = document.getElementById('saveBtn');
+        const pageName    = document.getElementById('pageCatName');
+
+        function checkDirty() {
+            const dirty =
+                document.getElementById('catNameInput').value !== origName ||
+                document.getElementById('CategoryStatus').checked !== origStatus;
+
+            changeAlert.classList.toggle('visible', dirty);
+        }
+
+        document.getElementById('catNameInput').addEventListener('input', checkDirty);
+        document.getElementById('CategoryStatus').addEventListener('change', checkDirty);
+
+        /* ── Sayfadan ayrılma uyarısı ── */
+        window.addEventListener('beforeunload', function (e) {
+            if (changeAlert.classList.contains('visible')) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        document.getElementById('editForm').addEventListener('submit', function () {
+            changeAlert.classList.remove('visible');
+        });
+    </script>
+}

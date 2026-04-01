@@ -1,0 +1,814 @@
+﻿@model List<ResultReservationDto>
+
+@{
+    ViewData["Title"] = "Rezervasyonlar";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "rezervasyon";
+    ViewData["Breadcrumb"] = "Rezervasyonlar";
+
+    var tours = ViewBag.Tours as List<ResultTourDto> ?? new List<ResultTourDto>();
+    var tourNames = tours.ToDictionary(t => t.TourId, t => t.Title);
+
+    var total = Model?.Count ?? 0;
+    var totalPerson = Model?.Sum(r => r.PersonCount) ?? 0;
+    var totalRev = Model?.Sum(r => r.TotalPrice) ?? 0m;
+    var today = Model?.Count(r => r.ReservationDate.Date == DateTime.Today) ?? 0;
+}
+
+<style>
+    /* ── Stat chips ───────────────────────────────────────────── */
+    .stat-chips {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 13px 18px;
+        flex: 1;
+        min-width: 150px;
+    }
+
+    .sc-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .sc-val {
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1.1;
+    }
+
+    .sc-lbl {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 1px;
+    }
+
+    /* ── Toolbar ──────────────────────────────────────────────── */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 13px 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 20px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 13px;
+        height: 38px;
+        min-width: 180px;
+        flex: 1;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    .filter-select {
+        height: 38px;
+        padding: 0 32px 0 12px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--t2);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition: border-color .18s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+    /* ── Bulk bar ─────────────────────────────────────────────── */
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    /* ── Tablo ────────────────────────────────────────────────── */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+    }
+
+        th:hover {
+            color: var(--t1);
+        }
+
+        th.sorted {
+            color: var(--accent);
+        }
+
+    td {
+        padding: 11px 14px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 38px;
+        padding: 11px 6px 11px 14px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    /* ── Badge ────────────────────────────────────────────────── */
+    .tour-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--accent);
+        background: rgba(2,132,199,.08);
+        padding: 2px 9px;
+        border-radius: 12px;
+    }
+
+    .code-badge {
+        font-family: monospace;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7c3aed;
+        background: rgba(124,58,237,.08);
+        padding: 2px 8px;
+        border-radius: 6px;
+        letter-spacing: .5px;
+    }
+
+    .price-cell {
+        font-weight: 700;
+        color: #16a34a;
+    }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    /* ── Boş durum ────────────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 70px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 44px;
+            margin-bottom: 16px;
+            display: block;
+            opacity: .3;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+    /* ── Detay modal ──────────────────────────────────────────── */
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        background: rgba(0,0,0,.5);
+        backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+    .modal-box {
+        background: #fff;
+        border-radius: var(--radius);
+        box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        width: 100%;
+        max-width: 480px;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .modal-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-close {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        cursor: pointer;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+
+        .modal-close:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+    }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+    .detail-lbl {
+        color: var(--t3);
+        font-weight: 500;
+    }
+
+    .detail-val {
+        color: var(--t1);
+        font-weight: 600;
+        text-align: right;
+    }
+
+    @@media(max-width:768px) {
+        .stat-chip {
+            min-width: 120px;
+        }
+
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+    }
+</style>
+
+<!-- ── Başlık ────────────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Rezervasyonlar</h1>
+        <p style="font-size:13px;color:var(--t3);margin-top:3px;">
+            @total rezervasyon · @tours.Count tur
+        </p>
+    </div>
+    <a asp-action="CreateReservation" asp-controller="Reservation" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Rezervasyon Ekle
+    </a>
+</div>
+
+<!-- ── Stat chips ─────────────────────────────────────────────── -->
+<div class="stat-chips">
+    <div class="stat-chip">
+        <div class="sc-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-calendar-check"></i></div>
+        <div><div class="sc-val">@total</div><div class="sc-lbl">Toplam Rezervasyon</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-icon" style="background:rgba(22,163,74,.1);color:#16a34a;"><i class="fa-solid fa-turkish-lira-sign"></i></div>
+        <div><div class="sc-val">@totalRev.ToString("N0") ₺</div><div class="sc-lbl">Toplam Gelir</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;"><i class="fa-solid fa-users"></i></div>
+        <div><div class="sc-val">@totalPerson</div><div class="sc-lbl">Toplam Kişi</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="sc-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fa-solid fa-clock"></i></div>
+        <div><div class="sc-val">@today</div><div class="sc-lbl">Bugünkü</div></div>
+    </div>
+</div>
+
+<!-- ── Bulk bar ───────────────────────────────────────────────── -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> rezervasyon seçildi</span>
+    <button class="btn-bulk-danger" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash"></i> Seçilenleri Sil
+    </button>
+    <button class="btn-ghost" style="height:34px;font-size:12px;" onclick="clearSel()">
+        <i class="fa-solid fa-xmark"></i> İptal
+    </button>
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Ad, e-posta veya rezervasyon kodu…" />
+    </div>
+
+    <select class="filter-select" id="tourFilter">
+        <option value="">Tüm Turlar</option>
+        @foreach (var t in tours)
+        {
+            <option value="@t.TourId">@t.Title</option>
+        }
+    </select>
+
+    <input type="date" class="filter-select" id="dateFilter" style="min-width:140px;" title="Tarihe göre filtrele" />
+
+    <span style="font-size:12px;color:var(--t3);white-space:nowrap;">
+        <span id="visibleCount">@total</span> sonuç
+    </span>
+
+    <button class="btn-icon" onclick="location.reload()" title="Yenile" style="width:38px;height:38px;">
+        <i class="fa-solid fa-rotate-right"></i>
+    </button>
+</div>
+
+<!-- ── Tablo ─────────────────────────────────────────────────── -->
+<div class="table-card">
+    <div class="tbl-wrap">
+        <table id="resTable">
+            <thead>
+                <tr>
+                    <th class="cb-cell" onclick="void(0)">
+                        <input type="checkbox" id="selectAll" />
+                    </th>
+                    <th onclick="sortTable(0)" data-col="0">Ad Soyad <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th class="hide-sm" onclick="sortTable(1)" data-col="1">E-posta <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th onclick="sortTable(2)" data-col="2">Rezervasyon Kodu <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th class="hide-sm" onclick="sortTable(3)" data-col="3">Tur <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th onclick="sortTable(4)" data-col="4">Kişi <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th onclick="sortTable(5)" data-col="5">Toplam <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th onclick="sortTable(6)" data-col="6">Tarih <i class="fa-solid fa-sort" style="font-size:10px;margin-left:3px;"></i></th>
+                    <th style="text-align:right;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var r in Model)
+                    {
+                        var tName = tourNames.ContainsKey(r.TourId) ? tourNames[r.TourId] : r.TourId;
+                        <tr class="res-row"
+                            data-name="@r.NameSurname.ToLower()"
+                            data-email="@(r.Email?.ToLower() ?? "")"
+                            data-code="@(r.ReservationCode?.ToLower() ?? "")"
+                            data-tourid="@r.TourId"
+                            data-tourname="@tName.ToLower()"
+                            data-date="@r.ReservationDate.ToString("yyyy-MM-dd")"
+                            data-rid="@r.ReservationId"
+                            data-namesurname="@r.NameSurname"
+                            data-fullname="@r.NameSurname"
+                            data-fullemail="@r.Email"
+                            data-fullcode="@r.ReservationCode"
+                            data-personcount="@r.PersonCount"
+                            data-totalprice="@r.TotalPrice"
+                            data-fulltourname="@tName"
+                            data-fulldate="@r.ReservationDate.ToString("dd.MM.yyyy HH:mm")">
+                            <td class="cb-cell">
+                                <input type="checkbox" class="row-cb" value="@r.ReservationId" />
+                            </td>
+                            <td>
+                                <div style="font-weight:600;color:var(--t1);font-size:13.5px;">@r.NameSurname</div>
+                            </td>
+                            <td class="hide-sm" style="font-size:12.5px;">@r.Email</td>
+                            <td>
+                                <span class="code-badge">@r.ReservationCode</span>
+                            </td>
+                            <td class="hide-sm">
+                                <span class="tour-badge">
+                                    <i class="fa-solid fa-map-pin" style="font-size:9px;"></i>
+                                    @tName
+                                </span>
+                            </td>
+                            <td style="text-align:center;">
+                                <span style="font-weight:700;color:var(--t1);">@r.PersonCount</span>
+                                <span style="font-size:11px;color:var(--t3);">kişi</span>
+                            </td>
+                            <td class="price-cell">
+                                @r.TotalPrice.ToString("C", new System.Globalization.CultureInfo("tr-TR"))
+                            </td>
+                            <td style="font-size:12.5px;white-space:nowrap;">
+                                <i class="fa-regular fa-calendar" style="color:var(--t3);margin-right:5px;font-size:11px;"></i>
+                                @r.ReservationDate.ToString("dd.MM.yyyy")
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    <button class="btn-icon" title="Detay"
+                                            style="color:var(--accent);border-color:rgba(2,132,199,.25);"
+                                            onclick="openDetail(this.closest('tr'))">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <a asp-action="UpdateReservation" asp-controller="Reservation"
+                                       asp-route-id="@r.ReservationId" class="btn-icon" title="Düzenle">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </a>
+                                    <form asp-action="DeleteReservation" asp-controller="Reservation"
+                                          asp-route-id="@r.ReservationId" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn-icon danger" title="Sil"
+                                                onclick="return confirm('Bu rezervasyonu silmek istediğinize emin misiniz?')">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="9">
+                            <div class="empty-state">
+                                <i class="fa-solid fa-calendar-xmark"></i>
+                                <h3>Henüz rezervasyon yok</h3>
+                                <p>İlk rezervasyonu eklemek için butona tıklayın.</p>
+                                <a asp-action="CreateReservation" asp-controller="Reservation" class="btn btn-primary">
+                                    <i class="fa-solid fa-plus"></i> Rezervasyon Ekle
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div id="noResults" style="display:none;">
+        <div class="empty-state">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <h3>Sonuç bulunamadı</h3>
+            <p>Farklı arama veya filtre deneyin.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Detay Modal ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="detailModal" onclick="closeDetail(event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <div>
+                <div class="modal-title">Rezervasyon Detayı</div>
+                <div id="modalCode" style="font-size:12px;color:var(--t3);margin-top:2px;"></div>
+            </div>
+            <button class="modal-close" onclick="closeDetailDirect()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-row"><span class="detail-lbl">Ad Soyad</span>     <span class="detail-val" id="dName"></span></div>
+            <div class="detail-row"><span class="detail-lbl">E-posta</span>       <span class="detail-val" id="dEmail"></span></div>
+            <div class="detail-row"><span class="detail-lbl">Tur</span>           <span class="detail-val" id="dTour"></span></div>
+            <div class="detail-row"><span class="detail-lbl">Kişi Sayısı</span>  <span class="detail-val" id="dPerson"></span></div>
+            <div class="detail-row"><span class="detail-lbl">Toplam Fiyat</span> <span class="detail-val" id="dPrice" style="color:#16a34a;"></span></div>
+            <div class="detail-row"><span class="detail-lbl">Tarih</span>         <span class="detail-val" id="dDate"></span></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* ── DOM refs ── */
+        var searchInput  = document.getElementById('searchInput');
+        var tourFilter   = document.getElementById('tourFilter');
+        var dateFilter   = document.getElementById('dateFilter');
+        var visibleCount = document.getElementById('visibleCount');
+        var bulkBar      = document.getElementById('bulkBar');
+        var bulkCount    = document.getElementById('bulkCount');
+        var selectAll    = document.getElementById('selectAll');
+
+        /* ── Filtre ── */
+        function applyFilter() {
+            var q   = (searchInput.value || '').toLowerCase().trim();
+            var tid = tourFilter.value;
+            var dt  = dateFilter.value; /* yyyy-MM-dd */
+            var cnt = 0;
+
+            document.querySelectorAll('.res-row').forEach(function(r) {
+                var match =
+                    (!q  || r.dataset.name.includes(q)  || r.dataset.email.includes(q) || r.dataset.code.includes(q)) &&
+                    (!tid || r.dataset.tourid === tid) &&
+                    (!dt  || r.dataset.date  === dt);
+                r.style.display = match ? '' : 'none';
+                if (match) cnt++;
+            });
+
+            visibleCount.textContent = cnt;
+            var nr = document.getElementById('noResults');
+            if (nr) nr.style.display = cnt === 0 ? 'block' : 'none';
+        }
+
+        searchInput.addEventListener('input',  applyFilter);
+        tourFilter .addEventListener('change', applyFilter);
+        dateFilter .addEventListener('change', applyFilter);
+
+        /* ── Sıralama ── */
+        var sortDir = {};
+        function sortTable(col) {
+            var tbody = document.getElementById('tableBody');
+            var rows  = Array.from(tbody.querySelectorAll('tr.res-row'));
+            sortDir[col] = !sortDir[col];
+            var asc = sortDir[col];
+
+            rows.sort(function(a, b) {
+                var keys = ['name','email','code','tourname','personcount','totalprice','date'];
+                var av = a.dataset[keys[col]] || '';
+                var bv = b.dataset[keys[col]] || '';
+                var n1 = parseFloat(av), n2 = parseFloat(bv);
+                if (!isNaN(n1) && !isNaN(n2)) return asc ? n1-n2 : n2-n1;
+                return asc ? av.localeCompare(bv, 'tr') : bv.localeCompare(av, 'tr');
+            });
+
+            rows.forEach(function(r) { tbody.appendChild(r); });
+
+            document.querySelectorAll('th[data-col]').forEach(function(th) {
+                th.classList.remove('sorted');
+                th.querySelector('i').className = 'fa-solid fa-sort';
+                th.style.fontSize = '';
+            });
+            var activeTh = document.querySelector('th[data-col="' + col + '"]');
+            if (activeTh) {
+                activeTh.classList.add('sorted');
+                activeTh.querySelector('i').className = asc ? 'fa-solid fa-sort-up' : 'fa-solid fa-sort-down';
+            }
+        }
+
+        /* ── Checkbox / bulk ── */
+        function updateBulk() {
+            var checked = document.querySelectorAll('.row-cb:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            var all = document.querySelectorAll('.row-cb');
+            selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+            selectAll.checked = all.length > 0 && checked.length === all.length;
+        }
+
+        selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.row-cb').forEach(function(cb) { cb.checked = selectAll.checked; });
+            updateBulk();
+        });
+        document.addEventListener('change', function(e) { if (e.target.matches('.row-cb')) updateBulk(); });
+
+        function clearSel() {
+            document.querySelectorAll('.row-cb').forEach(function(cb) { cb.checked = false; });
+            selectAll.checked = false;
+            updateBulk();
+        }
+        function bulkDelete() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c) { return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' rezervasyonu silmek istediğinize emin misiniz?')) return;
+            console.log('Silinecek:', ids); // TODO: AJAX
+        }
+
+        /* ── Detay Modal ── */
+        function openDetail(row) {
+            document.getElementById('modalCode').textContent = row.dataset.fullcode;
+            document.getElementById('dName')  .textContent  = row.dataset.fullname;
+            document.getElementById('dEmail') .textContent  = row.dataset.fullemail;
+            document.getElementById('dTour')  .textContent  = row.dataset.fulltourname;
+            document.getElementById('dPerson').textContent  = row.dataset.personcount + ' kişi';
+            document.getElementById('dPrice') .textContent  = parseFloat(row.dataset.totalprice).toLocaleString('tr-TR') + ' ₺';
+            document.getElementById('dDate')  .textContent  = row.dataset.fulldate;
+            document.getElementById('detailModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeDetailDirect() {
+            document.getElementById('detailModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        function closeDetail(e) {
+            if (e.target === document.getElementById('detailModal')) closeDetailDirect();
+        }
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDetailDirect(); });
+    </script>
+}
+

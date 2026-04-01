@@ -1,0 +1,37 @@
+﻿@model List<MonthlyGoalDto>
+@{
+    var colors = new (string start, string end)[] {
+       ("#0284c7","#38bdf8"), // mavi gradient
+    ("#16a34a","#4ade80"), // yeşil gradient
+    ("#d97706","#fbbf24"), // turuncu gradient
+    ("#7c3aed","#c084fc"), // mor gradient
+    ("#e11d48","#fb7185")  // kırmızı gradient
+    }; int i = 0;
+}
+<div class="v-card">
+    <div class="v-card-header">
+        <div class="v-card-icon" style="background:rgba(22,163,74,.1);color:#16a34a;"><i class="fa-solid fa-bullseye"></i></div>
+        <div>
+            <div class="v-card-title">Aylık Hedefler</div>
+            <div class="v-card-sub">@DateTime.Now.ToString("MMMM yyyy", new System.Globalization.CultureInfo("tr-TR")) ilerleme</div>
+        </div>
+    </div>
+    <div class="v-card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px 32px;">
+        @foreach (var item in Model)
+        {
+            var pct = Math.Round((double)(item.CurrentValue / (item.TargetValue == 0 ? 1 : item.TargetValue) * 100));
+            var gradient = colors[i % colors.Length];
+            <div class="goal-row" style="margin-bottom:0;">
+                <div class="goal-head">
+                    <span class="goal-name">@item.Name</span>
+                    <span class="goal-pct" style="color:@gradient.end;">@pct%</span>
+                </div>
+            <div class="goal-track">
+                <div class="goal-prog" style="width:@pct%;background:linear-gradient(90deg,@gradient.start,@gradient.end);"></div>
+                </div>
+            <div class="goal-sub">@item.CurrentValue / @item.TargetValue @item.Unit</div>
+        </div>
+        i++;
+        }
+    </div>
+</div>

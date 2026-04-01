@@ -1,0 +1,23 @@
+﻿@model List<ResultTourDto>
+<div class="sidebar-widget">
+    <h4 class="block-heading">Son Eklenen Turlar</h4>
+    <div class="recent-post-list">
+        @foreach (var item in Model)
+        {
+            <div class="list-recent flex-three">
+                <a href="/DefaultTour/TourDetails/@item.TourId" class="recent-image">
+                    <img src="@item.CoverImageUrl"
+                         alt="Image">
+                </a>
+                <div class="recent-info">
+                    <h4 class="title">
+                        <a href="/DefaultTour/TourDetails/@item.TourId">
+                            @item.Title
+                        </a>
+                    </h4>
+                    <p>Başlangıç fiyatı: <span class="text-main">@item.Price.ToString("N2") ₺</span></p>
+                </div>
+            </div>
+        }
+    </div>
+</div>

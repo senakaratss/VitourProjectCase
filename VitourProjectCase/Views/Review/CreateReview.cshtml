@@ -1,0 +1,994 @@
+﻿@model CreateReviewDto
+
+@{
+    ViewData["Title"] = "Yeni Yorum Ekle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "yorumlar";
+    ViewData["Breadcrumb"] = "Yorumlar / Yeni";
+}
+
+<style>
+    .create-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 24px;
+        align-items: start;
+    }
+
+    .v-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    .v-card-header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .v-card-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .v-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .v-card-sub {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 2px;
+    }
+
+    .form-body {
+        padding: 22px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .form-row.cols-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t2);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .form-label .req {
+            color: #ef4444;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+    .form-hint {
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        padding: 0 14px;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-canvas);
+        color: var(--t1);
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color .18s, box-shadow .18s;
+        outline: none;
+        appearance: none;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: #fff;
+        }
+
+        .form-control::placeholder {
+            color: var(--t3);
+        }
+
+        .form-control.input-validation-error {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 3px rgba(239,68,68,.10);
+        }
+
+    textarea.form-control {
+        height: auto;
+        padding: 12px 14px;
+        resize: vertical;
+        min-height: 110px;
+        line-height: 1.6;
+    }
+
+    select.form-control {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+
+    .field-validation-error:empty {
+        display: none !important;
+    }
+
+    .field-validation-error:not(:empty) {
+        font-size: 12px;
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+        .field-validation-error:not(:empty)::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+    /* ── Yıldız seçici ────────────────────────────────────────── */
+    .star-picker {
+        display: flex;
+        flex-direction: row-reverse;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+        .star-picker input {
+            display: none;
+        }
+
+        .star-picker label {
+            font-size: 28px;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: color .15s, transform .15s;
+            line-height: 1;
+        }
+
+            .star-picker label:hover,
+            .star-picker label:hover ~ label,
+            .star-picker input:checked ~ label {
+                color: #f59e0b;
+            }
+
+            .star-picker label:hover {
+                transform: scale(1.15);
+            }
+
+    .score-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        margin-top: 4px;
+        transition: all .2s;
+    }
+
+        .score-display .score-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--t1);
+            min-width: 24px;
+        }
+
+        .score-display .score-label {
+            font-size: 12px;
+            color: var(--t3);
+        }
+
+        .score-display.s1 {
+            border-color: rgba(239,68,68,.3);
+            background: rgba(239,68,68,.05);
+        }
+
+        .score-display.s2 {
+            border-color: rgba(249,115,22,.3);
+            background: rgba(249,115,22,.05);
+        }
+
+        .score-display.s3 {
+            border-color: rgba(245,158,11,.3);
+            background: rgba(245,158,11,.05);
+        }
+
+        .score-display.s4 {
+            border-color: rgba(34,197,94,.25);
+            background: rgba(34,197,94,.05);
+        }
+
+        .score-display.s5 {
+            border-color: rgba(2,132,199,.3);
+            background: rgba(2,132,199,.05);
+        }
+
+    .score-stars {
+        display: flex;
+        gap: 2px;
+    }
+
+        .score-stars i {
+            font-size: 14px;
+            color: #e2e8f0;
+        }
+
+            .score-stars i.lit {
+                color: #f59e0b;
+            }
+
+    /* ── Tarih input ──────────────────────────────────────────── */
+    input[type="date"].form-control {
+        color: var(--t2);
+    }
+
+        input[type="date"].form-control::-webkit-calendar-picker-indicator {
+            opacity: .5;
+            cursor: pointer;
+        }
+
+    /* ── Toggle ───────────────────────────────────────────────── */
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        gap: 16px;
+        transition: border-color .18s, background .18s;
+        user-select: none;
+    }
+
+        .toggle-row:has(.toggle-input:checked) {
+            border-color: var(--accent);
+            background: #f0f8ff;
+        }
+
+    .toggle-label-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .toggle-title {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .toggle-desc {
+        font-size: 11.5px;
+        color: var(--t3);
+    }
+
+    .toggle-input {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 44px;
+        height: 24px;
+        border-radius: 99px;
+        background: #cbd5e1;
+        cursor: pointer;
+        transition: background .2s;
+        position: relative;
+        display: block;
+        flex-shrink: 0;
+    }
+
+        .toggle-input::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(0,0,0,.2);
+            transition: transform .2s;
+        }
+
+        .toggle-input:checked {
+            background: var(--accent);
+        }
+
+            .toggle-input:checked::after {
+                transform: translateX(20px);
+            }
+
+    /* ── Validation summary ───────────────────────────────────── */
+    .alert-danger {
+        padding: 12px 16px;
+        background: rgba(239,68,68,.06);
+        border: 1px solid rgba(239,68,68,.2);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: #b91c1c;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+        .alert-danger i {
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .alert-danger ul {
+            margin: 4px 0 0 14px;
+        }
+
+        .alert-danger li {
+            margin-bottom: 2px;
+        }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .form-footer {
+        padding: 16px 24px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 18px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            box-shadow: 0 4px 16px rgba(2,132,199,.28);
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Sağ panel ────────────────────────────────────────────── */
+    .side-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* ── Yorum kartı önizleme ─────────────────────────────────── */
+    .review-card {
+        margin: 16px;
+        padding: 18px;
+        background: var(--bg-canvas);
+        border: 1.5px dashed #cbd5e1;
+        border-radius: var(--radius-sm);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .rc-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .rc-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg,#dbeafe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 800;
+        color: #2563eb;
+        flex-shrink: 0;
+        transition: background .2s;
+        text-transform: uppercase;
+    }
+
+    .rc-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+        min-height: 18px;
+    }
+
+    .rc-date {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 1px;
+    }
+
+    .rc-stars {
+        display: flex;
+        gap: 3px;
+    }
+
+        .rc-stars i {
+            font-size: 15px;
+            color: #e2e8f0;
+        }
+
+            .rc-stars i.lit {
+                color: #f59e0b;
+            }
+
+    .rc-comment {
+        font-size: 13px;
+        color: var(--t2);
+        line-height: 1.6;
+        min-height: 16px;
+        font-style: italic;
+    }
+
+    .rc-tour-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--accent);
+        font-weight: 600;
+        background: rgba(2,132,199,.08);
+        padding: 3px 10px;
+        border-radius: 20px;
+        width: fit-content;
+    }
+
+    .rc-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 20px;
+        width: fit-content;
+    }
+
+        .rc-status.active {
+            background: rgba(34,197,94,.1);
+            color: #16a34a;
+        }
+
+        .rc-status.inactive {
+            background: rgba(148,163,184,.1);
+            color: #64748b;
+        }
+
+    /* İpuçları */
+    .tip-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 20px 18px;
+    }
+
+    .tip-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+    }
+
+    .tip-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        margin-top: 6px;
+        flex-shrink: 0;
+    }
+
+    .tip-text {
+        font-size: 12.5px;
+        color: var(--t2);
+        line-height: 1.5;
+    }
+
+        .tip-text strong {
+            color: var(--t1);
+        }
+
+    @@media (max-width:900px) {
+        .create-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-row.cols-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Sayfa Başlığı -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:26px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Yeni Yorum Ekle</h1>
+        <p style="font-size:13px;color:var(--t3);margin-top:3px;">Tura ait yorum bilgilerini doldurun.</p>
+    </div>
+    <a href="/admin/yorumlar" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-left"></i> Geri Dön
+    </a>
+</div>
+
+<div class="create-grid">
+
+    <!-- Sol: Form -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <div asp-validation-summary="ModelOnly" class="alert-danger" style="display:none;">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <div><strong>Hataları düzeltin:</strong><ul></ul></div>
+        </div>
+
+        <!-- 1. Yorum Bilgileri -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);">
+                    <i class="fa-solid fa-user-pen"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Yorum Bilgileri</div>
+                    <div class="v-card-sub">Ad soyad, yorum metni ve tur seçimi</div>
+                </div>
+            </div>
+
+            <form method="post" novalidate id="createReviewForm">
+                @Html.AntiForgeryToken()
+
+                <div class="form-body">
+
+                    <!-- Ad Soyad -->
+                    <div class="form-group">
+                        <label asp-for="NameSurname" class="form-label">
+                            <i class="fa-solid fa-user" style="color:var(--accent);font-size:12px;"></i>
+                            Ad Soyad <span class="req">*</span>
+                        </label>
+                        <input asp-for="NameSurname" class="form-control" id="inpName"
+                               placeholder="Örn: Ahmet Yılmaz" autocomplete="off" maxlength="100" />
+                        <span asp-validation-for="NameSurname" class="field-validation-error"></span>
+                    </div>
+
+                    <!-- Yorum -->
+                    <div class="form-group">
+                        <label asp-for="Comment" class="form-label">
+                            <i class="fa-solid fa-comment-dots" style="color:var(--accent);font-size:12px;"></i>
+                            Yorum <span class="req">*</span>
+                        </label>
+                        <textarea asp-for="Comment" class="form-control" id="inpComment"
+                                  placeholder="Tura dair deneyim ve düşünceler…" rows="4"
+                                  maxlength="1000"></textarea>
+                        <span asp-validation-for="Comment" class="field-validation-error"></span>
+                        <span class="form-hint"><span id="commentCharCount">0</span> / 1000 karakter</span>
+                    </div>
+
+                    <!-- Tur + Tarih -->
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label asp-for="TourId" class="form-label">
+                                <i class="fa-solid fa-map-location-dot" style="color:var(--accent);font-size:12px;"></i>
+                                Tur <span class="req">*</span>
+                            </label>
+                            <input asp-for="TourId" class="form-control" id="inpTourId"
+                                   placeholder="Örn: 1" autocomplete="off" maxlength="100" />
+                            <span asp-validation-for="TourId" class="field-validation-error"></span>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+                <!-- 2. Puan -->
+                <div style="border-top:1px solid var(--border);">
+                    <div class="v-card-header" style="border-top:none;border-bottom:1px solid var(--border);">
+                        <div class="v-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;">
+                            <i class="fa-solid fa-star"></i>
+                        </div>
+                        <div>
+                            <div class="v-card-title">Puan</div>
+                            <div class="v-card-sub">1 ile 5 arasında yıldız seçin</div>
+                        </div>
+                    </div>
+
+                    <div class="form-body" style="padding-top:20px;">
+                        <div class="form-group">
+                            <label class="form-label">
+                                <i class="fa-solid fa-star-half-stroke" style="color:#f59e0b;font-size:12px;"></i>
+                                Puan Seç <span class="req">*</span>
+                            </label>
+
+                            <!-- Yıldız seçici (reverse trick) -->
+                            <div class="star-picker" id="starPicker">
+                                <input type="radio" asp-for="Score" value="5" id="s5" />
+                                <label for="s5" title="Mükemmel">★</label>
+                                <input type="radio" asp-for="Score" value="4" id="s4" />
+                                <label for="s4" title="İyi">★</label>
+                                <input type="radio" asp-for="Score" value="3" id="s3" />
+                                <label for="s3" title="Orta">★</label>
+                                <input type="radio" asp-for="Score" value="2" id="s2" />
+                                <label for="s2" title="Kötü">★</label>
+                                <input type="radio" asp-for="Score" value="1" id="s1" />
+                                <label for="s1" title="Çok Kötü">★</label>
+                            </div>
+
+                            <div class="score-display" id="scoreDisplay">
+                                <div class="score-val" id="scoreVal">—</div>
+                                <div class="score-stars" id="scoreStars">
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                    <i class="fa-regular fa-star"></i>
+                                </div>
+                                <div class="score-label" id="scoreLabel">Puan seçilmedi</div>
+                            </div>
+
+                            <span asp-validation-for="Score" class="field-validation-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Yayın Durumu -->
+                <div style="border-top:1px solid var(--border);">
+                    <div class="v-card-header" style="border-top:none;border-bottom:1px solid var(--border);">
+                        <div class="v-card-icon" style="background:rgba(34,197,94,.1);color:#16a34a;">
+                            <i class="fa-solid fa-eye"></i>
+                        </div>
+                        <div>
+                            <div class="v-card-title">Yayın Durumu</div>
+                            <div class="v-card-sub">Yorum sitede görünsün mü?</div>
+                        </div>
+                    </div>
+                    <div class="form-body" style="padding-bottom:8px;">
+                        <div class="form-group">
+                            <label class="toggle-row" for="Status">
+                                <div class="toggle-label-group">
+                                    <span class="toggle-title">Yorumu Yayına Al</span>
+                                    <span class="toggle-desc">
+                                        Aktif yorumlar tur detay sayfasında ziyaretçilere gösterilir.
+                                    </span>
+                                </div>
+                                <input asp-for="Status" type="checkbox" class="toggle-input" id="Status" />
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-footer">
+                        <a href="/admin/yorumlar" class="btn btn-ghost">
+                            <i class="fa-solid fa-xmark"></i> İptal
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> Yorumu Kaydet
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Sağ: Önizleme + İpuçları -->
+    <div class="side-panel">
+
+        <!-- Canlı Önizleme -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(168,85,247,.1);color:#a855f7;">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Canlı Önizleme</div>
+                    <div class="v-card-sub">Yorum sitede bu şekilde görünür</div>
+                </div>
+            </div>
+
+            <div class="review-card">
+                <!-- Header: avatar + isim + tarih -->
+                <div class="rc-header">
+                    <div class="rc-avatar" id="prevAvatar">?</div>
+                    <div>
+                        <div class="rc-name" id="prevName">
+                            <span style="color:var(--t3);font-weight:400;font-size:12px;">Ad girilmedi…</span>
+                        </div>
+                        <div class="rc-date" id="prevDate">—</div>
+                    </div>
+                </div>
+
+                <!-- Yıldızlar -->
+                <div class="rc-stars" id="prevStars">
+                    <i class="fa-regular fa-star"></i>
+                    <i class="fa-regular fa-star"></i>
+                    <i class="fa-regular fa-star"></i>
+                    <i class="fa-regular fa-star"></i>
+                    <i class="fa-regular fa-star"></i>
+                </div>
+
+                <!-- Yorum metni -->
+                <div class="rc-comment" id="prevComment">
+                    <span style="color:var(--t3);font-style:normal;font-size:12px;">Yorum metni girilmedi…</span>
+                </div>
+
+                <!-- Tur etiketi -->
+                <div id="prevTourWrap" style="display:none;">
+                    <span class="rc-tour-tag">
+                        <i class="fa-solid fa-map-location-dot" style="font-size:10px;"></i>
+                        <span id="prevTourName"></span>
+                    </span>
+                </div>
+
+                <!-- Durum -->
+                <div>
+                    <span class="rc-status inactive" id="prevStatus">
+                        <span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;"></span>
+                        Pasif
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Puan Rehberi -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;">
+                    <i class="fa-solid fa-chart-simple"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">Puan Rehberi</div>
+                    <div class="v-card-sub">Her puanın anlamı</div>
+                </div>
+            </div>
+            <div style="padding:14px 20px;display:flex;flex-direction:column;gap:10px;">
+                @{
+                    var scoreGuide = new (int Score, string Label, string Color, string Bg)[] {
+                                (5, "Mükemmel",  "#16a34a", "rgba(34,197,94,.08)"),
+                                (4, "İyi",       "#2563eb", "rgba(37,99,235,.08)"),
+                                (3, "Orta",      "#b45309", "rgba(245,158,11,.08)"),
+                                (2, "Kötü",      "#ea580c", "rgba(249,115,22,.08)"),
+                                (1, "Çok Kötü", "#dc2626", "rgba(239,68,68,.08)"),
+                                };
+                }
+                @foreach (var g in scoreGuide)
+                {
+                    <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;background:@g.Bg;">
+                        <div style="display:flex;gap:2px;">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="fa-@(i <= g.Score ? "solid" : "regular") fa-star"
+                                   style="font-size:11px;color:@(i <= g.Score ? "#f59e0b" : "#e2e8f0");"></i>
+                            }
+                        </div>
+                        <span style="font-size:12.5px;font-weight:600;color:@g.Color;">@g.Label</span>
+                        <span style="font-size:11px;color:var(--t3);margin-left:auto;">@g.Score / 5</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- İpuçları -->
+        <div class="v-card">
+            <div class="v-card-header">
+                <div class="v-card-icon" style="background:rgba(34,197,94,.1);color:#16a34a;">
+                    <i class="fa-solid fa-lightbulb"></i>
+                </div>
+                <div>
+                    <div class="v-card-title">İpuçları</div>
+                    <div class="v-card-sub">Kaliteli yorum için</div>
+                </div>
+            </div>
+            <ul class="tip-list">
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Gerçek isim kullanın</strong> — Ziyaretçiler gerçek isimli yorumlara daha fazla güvenir.</span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Detaylı yorum</strong> yazın — En az 2-3 cümlelik açıklama dönüşümü artırır.</span>
+                </li>
+                <li class="tip-item">
+                    <span class="tip-dot"></span>
+                    <span class="tip-text"><strong>Doğru puanlama</strong> yapın — Puan ortalaması tur sıralamasını doğrudan etkiler.</span>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+    <script>
+        /* ── Validation summary ── */
+        (function () {
+            var s = document.querySelector('[data-valmsg-summary]');
+            if (s && s.querySelectorAll('li').length > 0) s.style.display = 'flex';
+        })();
+
+        /* ── Referanslar ── */
+        var inpName    = document.getElementById('inpName');
+        var inpComment = document.getElementById('inpComment');
+        var inpTour    = document.getElementById('inpTour');
+        var inpDate    = document.getElementById('inpDate');
+        var statusChk  = document.getElementById('Status');
+
+        /* ── Karakter sayacı ── */
+        inpComment.addEventListener('input', function () {
+            document.getElementById('commentCharCount').textContent = this.value.length;
+            refreshPreview();
+        });
+
+        /* ── Puan config ── */
+        var scoreConfig = {
+            1: { label:'Çok Kötü',  cls:'s1' },
+            2: { label:'Kötü',      cls:'s2' },
+            3: { label:'Orta',      cls:'s3' },
+            4: { label:'İyi',       cls:'s4' },
+            5: { label:'Mükemmel',  cls:'s5' }
+        };
+
+        /* ── Puan seçimi ── */
+        document.querySelectorAll('input[name="Score"]').forEach(function (r) {
+            r.addEventListener('change', function () {
+                updateScoreDisplay(parseInt(this.value));
+                refreshPreview();
+            });
+        });
+
+        function updateScoreDisplay(score) {
+            var disp  = document.getElementById('scoreDisplay');
+            var val   = document.getElementById('scoreVal');
+            var label = document.getElementById('scoreLabel');
+            var stars = document.getElementById('scoreStars').querySelectorAll('i');
+
+            val.textContent   = score;
+            label.textContent = scoreConfig[score] ? scoreConfig[score].label : '—';
+            disp.className    = 'score-display ' + (scoreConfig[score] ? scoreConfig[score].cls : '');
+
+            stars.forEach(function (star, idx) {
+                star.className = idx < score ? 'fa-solid fa-star' : 'fa-regular fa-star';
+            });
+        }
+
+        /* ── Canlı Önizleme ── */
+        function refreshPreview() {
+            var name    = inpName.value.trim();
+            var comment = inpComment.value.trim();
+            var active  = statusChk.checked;
+            var dateVal = inpDate.value;
+            var score   = parseInt((document.querySelector('input[name="Score"]:checked') || {}).value) || 0;
+
+            /* Avatar + İsim */
+            var avatarEl = document.getElementById('prevAvatar');
+            var nameEl   = document.getElementById('prevName');
+
+            if (name) {
+                var initials = name.split(' ').map(function(w){ return w[0]; }).join('').substring(0,2).toUpperCase();
+                avatarEl.textContent  = initials;
+                avatarEl.style.background = 'linear-gradient(135deg,#dbeafe,#bfdbfe)';
+                nameEl.innerHTML = '<strong>' + name + '</strong>';
+            } else {
+                avatarEl.textContent = '?';
+                nameEl.innerHTML = '<span style="color:var(--t3);font-weight:400;font-size:12px;">Ad girilmedi…</span>';
+            }
+
+            /* Tarih */
+            var dateEl = document.getElementById('prevDate');
+            if (dateVal) {
+                var d = new Date(dateVal);
+                dateEl.textContent = d.toLocaleDateString('tr-TR', { day:'2-digit', month:'long', year:'numeric' });
+            } else {
+                dateEl.textContent = '—';
+            }
+
+            /* Yıldızlar */
+            var stars = document.getElementById('prevStars').querySelectorAll('i');
+            stars.forEach(function (s, i) {
+                s.className = i < score ? 'fa-solid fa-star' : 'fa-regular fa-star';
+                s.classList.toggle('lit', i < score);
+            });
+
+            /* Yorum */
+            var commentEl = document.getElementById('prevComment');
+            commentEl.innerHTML = comment
+                ? '"' + comment + '"'
+                : '<span style="color:var(--t3);font-style:normal;font-size:12px;">Yorum metni girilmedi…</span>';
+
+            /* Tur */
+            var tourOpt  = inpTour.options[inpTour.selectedIndex];
+            var tourWrap = document.getElementById('prevTourWrap');
+            if (tourOpt && tourOpt.value) {
+                tourWrap.style.display = 'block';
+                document.getElementById('prevTourName').textContent = tourOpt.text;
+            } else {
+                tourWrap.style.display = 'none';
+            }
+
+            /* Durum */
+            var statusEl  = document.getElementById('prevStatus');
+            statusEl.className = 'rc-status ' + (active ? 'active' : 'inactive');
+            statusEl.innerHTML =
+                '<span style="width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;"></span> ' +
+                (active ? 'Aktif' : 'Pasif');
+        }
+
+        /* ── Dinleyiciler ── */
+        inpName.addEventListener('input', refreshPreview);
+        inpTour.addEventListener('change', refreshPreview);
+        inpDate.addEventListener('change', refreshPreview);
+        statusChk.addEventListener('change', refreshPreview);
+
+        /* Varsayılan tarih = bugün */
+        if (!inpDate.value) {
+            inpDate.value = new Date().toISOString().split('T')[0];
+            refreshPreview();
+        }
+
+        refreshPreview();
+    </script>
+}

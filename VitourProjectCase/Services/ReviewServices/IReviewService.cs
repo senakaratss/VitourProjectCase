@@ -1,0 +1,15 @@
+﻿using VitourProjectCase.Dtos.ReviewDtos;
+
+namespace VitourProjectCase.Services.ReviewServices
+{
+    public interface IReviewService
+    {
+        Task<List<ResultReviewDto>> GetAllReviewAsync();
+        Task CreateReviewAsync(CreateReviewDto createReviewDto);
+        Task UpdateReviewAsync(UpdateReviewDto updateReviewDto);
+        Task DeleteReviewAsync(string id);
+        Task<GetReviewByIdDto> GetReviewByIdAsync(string id);
+        Task<List<ResultReviewByTourIdDto>> GetAllReviewsByTourIdAsync(string id);
+        Task<ReviewSummaryDto> GetReviewSummaryByTourIdAsync(string tourId);
+    }
+}

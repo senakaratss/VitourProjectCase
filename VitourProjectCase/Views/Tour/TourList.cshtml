@@ -1,0 +1,1341 @@
+﻿@model List<ResultTourDto>
+
+@{
+    ViewData["Title"] = "Turlar";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turlar";
+    ViewData["Breadcrumb"] = "Turlar";
+}
+
+<style>
+    /* ── Stat chips ───────────────────────────────────────────── */
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .stat-chip {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform .18s, box-shadow .18s;
+    }
+
+        .stat-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,.09);
+        }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .stat-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 3px;
+    }
+
+    /* ── Toolbar ──────────────────────────────────────────────── */
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 13px 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 16px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 13px;
+        height: 38px;
+        min-width: 220px;
+        flex: 1;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    .filter-select {
+        height: 38px;
+        padding: 0 32px 0 12px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--t2);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition: border-color .18s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+    /* View toggle */
+    .view-toggle {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .vt-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        transition: background .16s, color .16s;
+    }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .vt-btn:not(.active):hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Butonlar ─────────────────────────────────────────────── */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12.5px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .btn-icon.edit:hover {
+            background: rgba(2,132,199,.08);
+            border-color: rgba(2,132,199,.3);
+            color: var(--accent);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+    /* ── Toplu işlem bar ──────────────────────────────────────── */
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+               TABLE VIEW
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-header {
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .table-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .table-card-meta {
+        font-size: 12px;
+        color: var(--t3);
+        margin-left: 8px;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 11px 16px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        user-select: none;
+        cursor: pointer;
+    }
+
+        th.no-sort {
+            cursor: default;
+        }
+
+        th .sort-icon {
+            margin-left: 4px;
+            font-size: 9px;
+            opacity: .45;
+        }
+
+        th.asc .sort-icon, th.desc .sort-icon {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+    td {
+        padding: 13px 16px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 42px;
+        padding: 13px 6px 13px 16px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    /* Tur görseli + başlık */
+    .tour-cell {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 200px;
+    }
+
+    .tour-thumb {
+        width: 52px;
+        height: 40px;
+        border-radius: 6px;
+        object-fit: cover;
+        background: linear-gradient(135deg, #e0f2fe, #bfdbfe);
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #93c5fd;
+        font-size: 16px;
+        overflow: hidden;
+    }
+
+        .tour-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+    .tour-name {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .tour-id {
+        font-size: 11px;
+        color: var(--t3);
+        margin-top: 1px;
+        font-family: monospace;
+    }
+
+    /* Badge */
+    .tour-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        font-size: 10.5px;
+        font-weight: 700;
+    }
+
+    .tb-yeni {
+        background: rgba(34,197,94,.12);
+        color: #16a34a;
+    }
+
+    .tb-populer {
+        background: rgba(239,68,68,.1);
+        color: #dc2626;
+    }
+
+    .tb-indirim {
+        background: rgba(245,158,11,.12);
+        color: #b45309;
+    }
+
+    .tb-ozel {
+        background: rgba(139,92,246,.1);
+        color: #7c3aed;
+    }
+
+    /* Durum */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+        .status-badge .pip {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+
+    .badge-active {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+        .badge-active .pip {
+            background: #22c55e;
+        }
+
+    .badge-inactive {
+        background: rgba(148,163,184,.1);
+        color: #64748b;
+    }
+
+        .badge-inactive .pip {
+            background: #94a3b8;
+        }
+
+    /* Sayısal hücreler */
+    .num-cell {
+        font-weight: 600;
+        color: var(--t1);
+    }
+
+    .price-cell {
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 14px;
+    }
+
+    /* Aksiyon */
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        justify-content: flex-end;
+    }
+
+    /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+               CARD / GRID VIEW
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 18px;
+    }
+
+    .tour-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        transition: transform .18s, box-shadow .18s;
+        display: flex;
+        flex-direction: column;
+    }
+
+        .tour-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(0,0,0,.11);
+        }
+
+    .tc-img-wrap {
+        position: relative;
+        height: 150px;
+        background: linear-gradient(135deg, #e0f2fe, #bfdbfe);
+        overflow: hidden;
+    }
+
+        .tc-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+    .tc-img-ph {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: #93c5fd;
+    }
+
+    .tc-badge-wrap {
+        position: absolute;
+        top: 9px;
+        left: 9px;
+    }
+
+    .tc-status-wrap {
+        position: absolute;
+        top: 9px;
+        right: 9px;
+    }
+
+    .tc-cb {
+        position: absolute;
+        bottom: 9px;
+        left: 9px;
+    }
+
+    .tc-body {
+        padding: 14px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .tc-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .tc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 12px;
+        color: var(--t3);
+    }
+
+        .tc-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+    .tc-desc {
+        font-size: 12.5px;
+        color: var(--t3);
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .tc-footer {
+        padding: 10px 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .tc-price {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--accent);
+    }
+
+        .tc-price small {
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--t3);
+            display: block;
+            margin-bottom: 1px;
+        }
+
+    /* ── Boş & no-result ──────────────────────────────────────── */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 42px;
+            margin-bottom: 14px;
+            display: block;
+            opacity: .35;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+    /* ── Sayfalama ────────────────────────────────────────────── */
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 13px 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--t3);
+    }
+
+    .pagination-btns {
+        display: flex;
+        gap: 4px;
+    }
+
+    .pg-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .pg-btn:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .pg-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .pg-btn:disabled {
+            opacity: .3;
+            cursor: default;
+        }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @@media (max-width: 768px) {
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+
+        .search-field {
+            min-width: 140px;
+        }
+    }
+</style>
+
+<!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
+<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;">
+    <div>
+        <h1 style="font-size:20px; font-weight:700; color:var(--t1);">Turlar</h1>
+        <p style="font-size:13px; color:var(--t3); margin-top:3px;">Tüm turları buradan yönetebilirsiniz.</p>
+    </div>
+    <a href="/Tour/CreateTour/" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Yeni Tur Ekle
+    </a>
+</div>
+
+<!-- ── İstatistik Chips ──────────────────────────────────────── -->
+<div class="stat-row">
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(2,132,199,.1); color:var(--accent);">
+            <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count ?? 0)</div>
+            <div class="stat-label">Toplam Tur</div>
+        </div>
+    </div>
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(34,197,94,.1); color:#16a34a;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(t => t.Status) ?? 0)</div>
+            <div class="stat-label">Aktif</div>
+        </div>
+    </div>
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(148,163,184,.1); color:#64748b;">
+            <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(t => !t.Status) ?? 0)</div>
+            <div class="stat-label">Pasif</div>
+        </div>
+    </div>
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(245,158,11,.1); color:#f59e0b;">
+            <i class="fa-solid fa-turkish-lira-sign"></i>
+        </div>
+        <div>
+            <div class="stat-val">
+                @if (Model != null && Model.Any())
+                {
+                    @string.Format("{0:N0}", Model.Average(t => t.Price))
+                }
+                else
+                {
+
+                    <text>—</text>
+                }
+            </div>
+            <div class="stat-label">Ort. Fiyat (₺)</div>
+        </div>
+    </div>
+
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(168,85,247,.1); color:#a855f7;">
+            <i class="fa-solid fa-fire"></i>
+        </div>
+        <div>
+            <div class="stat-val">@(Model?.Count(t => t.Badge == "Popüler") ?? 0)</div>
+            <div class="stat-label">Popüler Tur</div>
+        </div>
+    </div>
+</div>
+
+<!-- ── Toplu İşlem Barı ──────────────────────────────────────── -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> tur seçildi</span>
+    <button class="btn-bulk-danger" onclick="bulkDelete()">
+        <i class="fa-solid fa-trash"></i> Seçilenleri Sil
+    </button>
+    <button class="btn-ghost" style="height:34px; font-size:12px;" onclick="clearSelection()">
+        <i class="fa-solid fa-xmark"></i> İptal
+    </button>
+</div>
+
+<!-- ── Toolbar ───────────────────────────────────────────────── -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Tur adı veya açıklama ara…" />
+    </div>
+
+    <select class="filter-select" id="statusFilter">
+        <option value="">Tüm Durumlar</option>
+        <option value="active">Aktif</option>
+        <option value="inactive">Pasif</option>
+    </select>
+
+    <select class="filter-select" id="badgeFilter">
+        <option value="">Tüm Rozetler</option>
+        <option value="Yeni">Yeni</option>
+        <option value="Popüler">Popüler</option>
+        <option value="İndirim">İndirim</option>
+        <option value="Özel">Özel</option>
+    </select>
+
+    <select class="filter-select" id="categoryFilter">
+        <option value="">Tüm Kategoriler</option>
+        @if (ViewBag.Categories != null)
+        {
+            foreach (var cat in (List<SelectListItem>)ViewBag.Categories)
+            {
+                <option value="@cat.Value">@cat.Text</option>
+            }
+        }
+    </select>
+
+    <span style="font-size:12px; color:var(--t3); white-space:nowrap; margin-left:auto;">
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> sonuç
+    </span>
+
+    <div class="view-toggle">
+        <button class="vt-btn active" id="btnTable" onclick="setView('table')" title="Tablo Görünümü">
+            <i class="fa-solid fa-table-list"></i>
+        </button>
+        <button class="vt-btn" id="btnGrid" onclick="setView('grid')" title="Kart Görünümü">
+            <i class="fa-solid fa-grip"></i>
+        </button>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     TABLE VIEW
+════════════════════════════════════════════════════════════════ -->
+<div id="tableView">
+    <div class="table-card">
+        <div class="table-card-header">
+            <div>
+                <span class="table-card-title">Tur Listesi</span>
+                <span class="table-card-meta">Toplam @(Model?.Count ?? 0) kayıt</span>
+            </div>
+            <div style="display:flex; gap:6px;">
+                <a href="@Url.Action("DownloadToursExcel","Report")" class="btn-icon" title="CSV Dışa Aktar">
+                    <i class="fa-solid fa-file-arrow-down"></i>
+                </a>
+                <button class="btn-icon" title="Yenile" onclick="location.reload()">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="tbl-wrap">
+            <table id="tourTable">
+                <thead>
+                    <tr>
+                        <th class="cb-cell no-sort">
+                            <input type="checkbox" id="selectAll" title="Tümünü Seç" />
+                        </th>
+                        <th data-col="title">Tur <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="category" class="hide-sm">Kategori <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="days" class="hide-sm">Süre <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="capacity" class="hide-sm">Kapasite <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="price">Fiyat <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="status" class="hide-sm">Durum <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="no-sort" style="text-align:right;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var tour in Model)
+                        {
+                            <tr class="tour-row"
+                                data-title="@tour.Title.ToLower()"
+                                data-status="@(tour.Status ? "active" : "inactive")"
+                                data-badge="@(tour.Badge ?? "")"
+                                data-category="@(tour.CategoryId ?? "")"
+                                data-price="@tour.Price">
+
+                                <td class="cb-cell">
+                                    <input type="checkbox" class="row-cb" value="@tour.TourId" />
+                                </td>
+
+                                <td>
+                                    <div class="tour-cell">
+                                        <div class="tour-thumb">
+                                            @if (!string.IsNullOrEmpty(tour.CoverImageUrl))
+                                            {
+                                                <img src="@tour.CoverImageUrl" alt="@tour.Title"
+                                                     onerror="this.style.display='none'" />
+                                            }
+                                            else
+                                            {
+                                                <i class="fa-solid fa-image"></i>
+                                            }
+                                        </div>
+                                        <div>
+                                            <div class="tour-name">@tour.Title</div>
+                                            <div style="display:flex; align-items:center; gap:6px; margin-top:3px;">
+                                                <span class="tour-id">@tour.TourId</span>
+                                                @if (!string.IsNullOrEmpty(tour.Badge))
+                                                {
+                                                    var badgeCls = tour.Badge switch
+                                                    {
+                                                        "Yeni" => "tb-yeni",
+                                                        "Popüler" => "tb-populer",
+                                                        "İndirim" => "tb-indirim",
+                                                        "Özel" => "tb-ozel",
+                                                        _ => ""
+                                                    };
+                                                    <span class="tour-badge @badgeCls">@tour.Badge</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="hide-sm" style="font-size:13px; color:var(--t2);">
+                                    @* ViewBag.CategoryNames ile doldurulacak *@
+                                    @* @(ViewBag.CategoryNames != null && ViewBag.CategoryNames.ContainsKey(tour.CategoryId)
+                                                        ? ViewBag.CategoryNames[tour.CategoryId] : "—") *@
+                                    @(tour.CategoryName ?? "-")
+                                </td>
+
+                                <td class="hide-sm">
+                                    <span class="num-cell">@tour.DayCount</span>
+                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">gün</span>
+                                </td>
+
+                                <td class="hide-sm">
+                                    <span class="num-cell">@tour.Capacity</span>
+                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">kişi</span>
+                                </td>
+
+                                <td>
+                                    <span class="price-cell">
+                                        ₺@tour.Price.ToString("N0")
+                                    </span>
+                                </td>
+
+                                <td class="hide-sm">
+                                    @if (tour.Status)
+                                    {
+                                        <span class="status-badge badge-active">
+                                            <span class="pip"></span> Aktif
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge badge-inactive">
+                                            <span class="pip"></span> Pasif
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <div class="action-group">
+                                        <a asp-controller="Report" asp-action="DownloadReservationsPdf" asp-route-tourId="@tour.TourId"
+                                           class="btn-icon" title="PDF İndir">
+                                            <i class="fa-solid fa-file-pdf"></i>
+                                        </a>
+                                        <a href="/Review/ReviewListByTourId/@tour.TourId" class="btn-icon" title="Görüntüle">
+                                            <i class="fa-solid fa-comments"></i>
+                                        </a>
+                                        <a href="/Tour/UpdateTour/@tour.TourId"
+                                           class="btn-icon edit" title="Düzenle">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <form asp-action="DeleteTour" asp-controller="Tour"
+                                              asp-route-id="@tour.TourId"
+                                              method="post" style="display:inline;"
+                                              onsubmit="return confirm('@tour.Title turunu silmek istediğinize emin misiniz?')">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-icon danger" title="Sil">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-map-location-dot"></i>
+                                    <h3>Henüz tur eklenmemiş</h3>
+                                    <p>İlk turunuzu ekleyerek başlayın.</p>
+                                    <a href="/Tour/CreateTour/" class="btn btn-primary">
+                                        <i class="fa-solid fa-plus"></i> Yeni Tur Ekle
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Arama boş state -->
+        <div id="noResults" style="display:none;">
+            <div class="empty-state">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı anahtar kelimeler veya filtreler deneyin.</p>
+            </div>
+        </div>
+
+        <!-- Sayfalama -->
+        <div class="pagination">
+            <span class="pagination-info">
+                Toplam <strong>@(Model?.Count ?? 0)</strong> kayıt
+            </span>
+            <div class="pagination-btns">
+                <button class="pg-btn" disabled>
+                    <i class="fa-solid fa-chevron-left" style="font-size:10px;"></i>
+                </button>
+                <button class="pg-btn active">1</button>
+                <button class="pg-btn" disabled>
+                    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     GRID / CARD VIEW
+════════════════════════════════════════════════════════════════ -->
+<div id="gridView" style="display:none;">
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="cards-grid" id="cardsGrid">
+            @foreach (var tour in Model)
+            {
+                var badgeCls = tour.Badge switch
+                {
+                    "Yeni" => "tb-yeni",
+                    "Popüler" => "tb-populer",
+                    "İndirim" => "tb-indirim",
+                    "Özel" => "tb-ozel",
+                    _ => ""
+                };
+
+                <div class="tour-card card-item"
+                     data-title="@tour.Title.ToLower()"
+                     data-status="@(tour.Status ? "active" : "inactive")"
+                     data-badge="@(tour.Badge ?? "")"
+                     data-category="@(tour.CategoryId ?? "")">
+
+                    <div class="tc-img-wrap">
+                        @if (!string.IsNullOrEmpty(tour.CoverImageUrl))
+                        {
+                            <img src="@tour.CoverImageUrl" alt="@tour.Title"
+                                 onerror="this.parentElement.innerHTML='<div class=\'tc-img-ph\'><i class=\'fa-solid fa-image\'></i></div>'" />
+                        }
+                        else
+                        {
+                            <div class="tc-img-ph"><i class="fa-solid fa-image"></i></div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(tour.Badge))
+                        {
+                            <div class="tc-badge-wrap">
+                                <span class="tour-badge @badgeCls">@tour.Badge</span>
+                            </div>
+                        }
+
+                        <div class="tc-status-wrap">
+                            @if (tour.Status)
+                            {
+                                <span class="status-badge badge-active" style="font-size:10.5px; padding:2px 8px;">
+                                    <span class="pip"></span> Aktif
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge badge-inactive" style="font-size:10.5px; padding:2px 8px;">
+                                    <span class="pip"></span> Pasif
+                                </span>
+                            }
+                        </div>
+
+                        <div class="tc-cb">
+                            <input type="checkbox" class="row-cb-grid" value="@tour.TourId"
+                                   style="width:15px;height:15px;accent-color:var(--accent);" />
+                        </div>
+                    </div>
+
+                    <div class="tc-body">
+                        <div class="tc-title">@tour.Title</div>
+                        <div class="tc-meta">
+                            <span><i class="fa-regular fa-calendar-days"></i> @tour.DayCount gün</span>
+                            <span><i class="fa-solid fa-users"></i> @tour.Capacity kişi</span>
+                        </div>
+                        @if (!string.IsNullOrEmpty(tour.Description))
+                        {
+                            <div class="tc-desc">@tour.Description</div>
+                        }
+                    </div>
+
+                    <div class="tc-footer">
+                        <div class="tc-price">
+                            <small>Kişi başı</small>
+                            ₺@tour.Price.ToString("N0")
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <a asp-controller="Report" asp-action="DownloadReservationsPdf" asp-route-tourId="@tour.TourId"
+                               class="btn-icon" title="PDF İndir">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </a>
+                            <a href="/Review/ReviewListByTourId/@tour.TourId" class="btn-icon" title="Görüntüle">
+                                <i class="fa-solid fa-comments"></i>
+                            </a>
+                            <a href="/Tour/UpdateTour/@tour.TourId" class="btn-icon edit" title="Düzenle">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <form asp-action="DeleteTour" asp-controller="Tour"
+                                  asp-route-id="@tour.TourId"
+                                  method="post" style="display:inline;"
+                                  onsubmit="return confirm('@tour.Title turunu silmek istediğinize emin misiniz?')">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn-icon danger" title="Sil">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state" style="background:#fff; border:1px solid var(--border); border-radius:var(--radius); padding:60px 20px;">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <h3>Henüz tur eklenmemiş</h3>
+            <p>İlk turunuzu ekleyerek başlayın.</p>
+            <a href="/Tour/CreateTour/" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Yeni Tur Ekle
+            </a>
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+    <script>
+        /* ── Görünüm değiştirme ── */
+        function setView(v) {
+            const isTable = v === 'table';
+            document.getElementById('tableView').style.display = isTable ? 'block' : 'none';
+            document.getElementById('gridView').style.display  = isTable ? 'none'  : 'block';
+            document.getElementById('btnTable').classList.toggle('active', isTable);
+            document.getElementById('btnGrid').classList.toggle('active', !isTable);
+            localStorage.setItem('tourView', v);
+            filterRows();
+        }
+
+        /* Önceki tercihi geri yükle */
+        (function () {
+            const saved = localStorage.getItem('tourView');
+            if (saved === 'grid') setView('grid');
+        })();
+
+        /* ── Filtre & Arama ── */
+        const searchInput    = document.getElementById('searchInput');
+        const statusFilter   = document.getElementById('statusFilter');
+        const badgeFilter    = document.getElementById('badgeFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const visibleCount   = document.getElementById('visibleCount');
+        const noResults      = document.getElementById('noResults');
+
+        function filterRows() {
+            const q      = searchInput.value.toLowerCase().trim();
+            const status = statusFilter.value;
+            const badge  = badgeFilter.value;
+            const cat    = categoryFilter.value;
+
+            /* Tablo satırları */
+            const rows = document.querySelectorAll('.tour-row');
+            let cnt = 0;
+            rows.forEach(r => {
+                const show =
+                    (!q      || r.dataset.title.includes(q))    &&
+                    (!status || r.dataset.status   === status)  &&
+                    (!badge  || r.dataset.badge    === badge)   &&
+                    (!cat    || r.dataset.category === cat);
+                r.style.display = show ? '' : 'none';
+                if (show) cnt++;
+            });
+
+            /* Kart öğeleri */
+            document.querySelectorAll('.card-item').forEach(c => {
+                const show =
+                    (!q      || c.dataset.title.includes(q))    &&
+                    (!status || c.dataset.status   === status)  &&
+                    (!badge  || c.dataset.badge    === badge)   &&
+                    (!cat    || c.dataset.category === cat);
+                c.style.display = show ? '' : 'none';
+            });
+
+            visibleCount.textContent = cnt;
+            if (noResults) noResults.style.display = cnt === 0 ? 'block' : 'none';
+        }
+
+        [searchInput, statusFilter, badgeFilter, categoryFilter].forEach(el =>
+            el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', filterRows)
+        );
+
+        /* ── Checkbox toplu seçim ── */
+        const bulkBar   = document.getElementById('bulkBar');
+        const bulkCount = document.getElementById('bulkCount');
+        const selectAll = document.getElementById('selectAll');
+
+        function updateBulk() {
+            const checked = document.querySelectorAll('.row-cb:checked, .row-cb-grid:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            if (selectAll) {
+                const all = document.querySelectorAll('.row-cb');
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                document.querySelectorAll('.row-cb').forEach(cb => cb.checked = this.checked);
+                updateBulk();
+            });
+        }
+
+        document.addEventListener('change', e => {
+            if (e.target.matches('.row-cb, .row-cb-grid')) updateBulk();
+        });
+
+        function clearSelection() {
+            document.querySelectorAll('.row-cb, .row-cb-grid').forEach(cb => cb.checked = false);
+            if (selectAll) selectAll.checked = false;
+            updateBulk();
+        }
+
+        function bulkDelete() {
+            const ids = [...document.querySelectorAll('.row-cb:checked, .row-cb-grid:checked')].map(c => c.value);
+            if (!ids.length) return;
+            if (!confirm(`${ids.length} turu kalıcı olarak silmek istediğinize emin misiniz?`)) return;
+            console.log('Silinecek IDs:', ids); // TODO: AJAX ile backend'e gönder
+        }
+
+
+             function confirmDelete(tourId, tourTitle) {
+            if (confirm(`'${tourTitle}' turunu silmek istediğinize emin misiniz?`)) {
+                document.getElementById('del-' + tourId).submit();
+            }
+        }
+        /* ── Sütun sıralama ── */
+        document.querySelectorAll('th[data-col]').forEach(th => {
+            th.addEventListener('click', function () {
+                const asc = !this.classList.contains('asc');
+                document.querySelectorAll('th[data-col]').forEach(t => {
+                    t.classList.remove('asc', 'desc');
+                    t.querySelector('.sort-icon').className = 'fa-solid fa-sort sort-icon';
+                });
+                this.classList.add(asc ? 'asc' : 'desc');
+                this.querySelector('.sort-icon').className =
+                    `fa-solid fa-sort-${asc ? 'up' : 'down'} sort-icon`;
+
+                const col  = this.dataset.col;
+                const body = document.getElementById('tableBody');
+                const rows = [...body.querySelectorAll('.tour-row')];
+
+                rows.sort((a, b) => {
+                    let va, vb;
+                    if (col === 'price') {
+                        va = parseFloat(a.dataset.price); vb = parseFloat(b.dataset.price);
+                        return asc ? va - vb : vb - va;
+                    }
+                    va = (a.dataset[col] || a.dataset.title || '').toString();
+                    vb = (b.dataset[col] || b.dataset.title || '').toString();
+                    return asc ? va.localeCompare(vb, 'tr') : vb.localeCompare(va, 'tr');
+                });
+
+                rows.forEach(r => body.appendChild(r));
+            });
+        });
+    </script>
+}

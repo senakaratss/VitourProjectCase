@@ -1,0 +1,1279 @@
+﻿@model List<ResultTourPlanDto>
+
+@{
+    ViewData["Title"] = "Tur Planları Yönetimi";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "turplanlar";
+    ViewData["Breadcrumb"] = "Tur Planları";
+
+    var dayColors = new[] {
+        "#0284c7","#16a34a","#a855f7","#f59e0b","#ef4444",
+        "#0891b2","#7c3aed","#059669","#dc2626","#d97706"
+    };
+
+    string DayColor(int d) => d > 0 ? dayColors[(d - 1) % dayColors.Length] : "#cbd5e1";
+
+    var tours = ViewBag.Tours as List<ResultTourDto> ?? new List<ResultTourDto>();
+    var plansByTour = Model?
+        .GroupBy(p => p.TourId)
+        .ToDictionary(g => g.Key, g => g.OrderBy(p => p.DayNumber).ToList())
+        ?? new Dictionary<string, List<ResultTourPlanDto>>();
+}
+
+<style>
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit,minmax(150px,1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .stat-chip {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 15px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform .18s,box-shadow .18s;
+    }
+
+        .stat-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,.09);
+        }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .stat-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--t1);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 3px;
+    }
+
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 13px 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        margin-bottom: 18px;
+    }
+
+    .search-field {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        padding: 0 13px;
+        height: 38px;
+        min-width: 220px;
+        flex: 1;
+        transition: border-color .18s;
+    }
+
+        .search-field:focus-within {
+            border-color: var(--accent);
+        }
+
+        .search-field i {
+            color: var(--t3);
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .search-field input {
+            background: transparent;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 13.5px;
+            color: var(--t1);
+            width: 100%;
+        }
+
+            .search-field input::placeholder {
+                color: var(--t3);
+            }
+
+    .filter-select {
+        height: 38px;
+        padding: 0 32px 0 12px;
+        background: var(--bg-canvas);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--t2);
+        outline: none;
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        transition: border-color .18s;
+    }
+
+        .filter-select:focus {
+            border-color: var(--accent);
+        }
+
+    .view-toggle {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+    }
+
+    .vt-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+        transition: background .16s,color .16s;
+    }
+
+        .vt-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .vt-btn:not(.active):hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 16px;
+        height: 38px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        cursor: pointer;
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .btn-icon:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .btn-icon.edit:hover {
+            background: rgba(2,132,199,.08);
+            border-color: rgba(2,132,199,.3);
+            color: var(--accent);
+        }
+
+        .btn-icon.danger:hover {
+            background: rgba(239,68,68,.08);
+            border-color: rgba(239,68,68,.3);
+            color: #ef4444;
+        }
+
+        .btn-icon.add:hover {
+            background: rgba(34,197,94,.08);
+            border-color: rgba(34,197,94,.3);
+            color: #16a34a;
+        }
+
+    .bulk-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        background: #eff6ff;
+        border: 1px solid rgba(2,132,199,.2);
+        border-radius: var(--radius);
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+    }
+
+        .bulk-bar.visible {
+            display: flex;
+        }
+
+    .bulk-info {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+        flex: 1;
+    }
+
+    .btn-bulk-danger {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 14px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 12.5px;
+        font-weight: 600;
+        cursor: pointer;
+        border: 1.5px solid rgba(239,68,68,.25);
+        background: rgba(239,68,68,.07);
+        color: #dc2626;
+        transition: all .16s;
+    }
+
+        .btn-bulk-danger:hover {
+            background: rgba(239,68,68,.15);
+        }
+
+    /* Tur Grubu */
+    .tour-group {
+        margin-bottom: 16px;
+    }
+
+        .tour-group:last-child {
+            margin-bottom: 0;
+        }
+
+    .tour-group-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 18px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius) var(--radius) 0 0;
+        box-shadow: var(--shadow);
+        cursor: pointer;
+        user-select: none;
+        transition: background .16s;
+    }
+
+        .tour-group-header:hover {
+            background: #f8fafc;
+        }
+
+    .tgh-thumb {
+        width: 48px;
+        height: 38px;
+        border-radius: 7px;
+        flex-shrink: 0;
+        background: linear-gradient(135deg,#e0f2fe,#bfdbfe);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #93c5fd;
+        font-size: 16px;
+        overflow: hidden;
+    }
+
+        .tgh-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .tgh-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tgh-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tgh-meta {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 3px;
+    }
+
+        .tgh-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+    .tgh-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .tgh-plan-count {
+        padding: 3px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        background: rgba(2,132,199,.1);
+        color: var(--accent);
+    }
+
+    .tgh-coverage {
+        font-size: 11.5px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 20px;
+    }
+
+    .coverage-full {
+        background: rgba(34,197,94,.1);
+        color: #16a34a;
+    }
+
+    .coverage-partial {
+        background: rgba(245,158,11,.1);
+        color: #b45309;
+    }
+
+    .coverage-empty {
+        background: rgba(239,68,68,.1);
+        color: #dc2626;
+    }
+
+    .tgh-chevron {
+        font-size: 12px;
+        color: var(--t3);
+        transition: transform .2s;
+    }
+
+        .tgh-chevron.open {
+            transform: rotate(180deg);
+        }
+
+    /* Grup govdesi - varsayilan acik */
+    .tour-group-body {
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 var(--radius) var(--radius);
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .group-collapsed .tour-group-body {
+        display: none;
+    }
+
+    /* Plan satiri - sadece gun + baslik, aciklama YOK */
+    .tg-plan-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 18px;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .13s;
+    }
+
+        .tg-plan-row:hover {
+            background: #f8fafc;
+        }
+
+    .tg-day-badge {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 900;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .tg-plan-title {
+        flex: 1;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--t1);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        min-width: 0;
+    }
+
+    .tg-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .tg-missing-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 18px;
+        border-bottom: 1px dashed #f1f5f9;
+        background: #fafafa;
+    }
+
+    .tg-missing-badge {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 900;
+        color: #cbd5e1;
+        background: #f1f5f9;
+        flex-shrink: 0;
+    }
+
+    .tg-add-row {
+        padding: 10px 18px;
+        border-top: 1px dashed var(--border);
+        background: #fafafa;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .add-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--accent);
+        text-decoration: none;
+        padding: 5px 12px;
+        border-radius: var(--radius-sm);
+        border: 1.5px dashed rgba(2,132,199,.3);
+        background: rgba(2,132,199,.04);
+        transition: background .15s;
+    }
+
+        .add-link:hover {
+            background: rgba(2,132,199,.09);
+        }
+
+    .all-link {
+        font-size: 12px;
+        color: var(--t3);
+        text-decoration: none;
+    }
+
+        .all-link:hover {
+            color: var(--accent);
+        }
+
+    /* Tablo */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .table-card-header {
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tbl-wrap {
+        overflow-x: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    thead {
+        background: #f8fafc;
+    }
+
+    th {
+        text-align: left;
+        padding: 10px 14px;
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--t3);
+        border-bottom: 1px solid var(--border);
+        white-space: nowrap;
+        user-select: none;
+        cursor: pointer;
+    }
+
+        th.no-sort {
+            cursor: default;
+        }
+
+        th .si {
+            margin-left: 3px;
+            font-size: 9px;
+            opacity: .4;
+        }
+
+        th.asc .si, th.desc .si {
+            opacity: 1;
+            color: var(--accent);
+        }
+
+    td {
+        padding: 11px 14px;
+        color: var(--t2);
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    tbody tr {
+        transition: background .13s;
+    }
+
+        tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+    .cb-cell {
+        width: 38px;
+        padding: 11px 6px 11px 14px;
+    }
+
+    input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: var(--accent);
+        cursor: pointer;
+    }
+
+    .day-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .tour-link {
+        font-size: 13px;
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .tour-link:hover {
+            text-decoration: underline;
+        }
+
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--t3);
+    }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 14px;
+            display: block;
+            opacity: .3;
+        }
+
+        .empty-state h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--t2);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+    .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 12px 18px;
+        border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+        font-size: 13px;
+        color: var(--t3);
+    }
+
+    .pagination-btns {
+        display: flex;
+        gap: 4px;
+    }
+
+    .pg-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: transparent;
+        color: var(--t2);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all .16s;
+        text-decoration: none;
+    }
+
+        .pg-btn:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+        .pg-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .pg-btn:disabled {
+            opacity: .3;
+            cursor: default;
+        }
+
+    @@media (max-width:768px) {
+        td.hide-sm, th.hide-sm {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Sayfa Basligi -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Tur Planları</h1>
+        <p style="font-size:13px;color:var(--t3);margin-top:3px;">Tüm turlara ait günlük programları buradan yönetin.</p>
+    </div>
+    <button class="btn btn-ghost" onclick="toggleAllGroups()" id="toggleAllBtn">
+        <i class="fa-solid fa-chevron-up"></i> Tümünü Daralt
+    </button>
+</div>
+
+<!-- Stat chips -->
+<div class="stat-row">
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-route"></i></div>
+        <div><div class="stat-val">@(Model?.Count ?? 0)</div><div class="stat-label">Toplam Plan</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(168,85,247,.1);color:#a855f7;"><i class="fa-solid fa-map"></i></div>
+        <div><div class="stat-val">@tours.Count</div><div class="stat-label">Toplam Tur</div></div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(34,197,94,.1);color:#16a34a;"><i class="fa-solid fa-circle-check"></i></div>
+        <div>
+            <div class="stat-val">
+                @{
+                    var fullTours = tours.Count(t =>
+                    {
+                        var dc = t.DayCount; if (dc <= 0) return false;
+                        var pc = plansByTour.ContainsKey(t.TourId) ? plansByTour[t.TourId].Select(p => p.DayNumber).Distinct().Count() : 0;
+                        return pc >= dc;
+                    });
+                }
+@fullTours
+            </div>
+            <div class="stat-label">Tam Kapsamlı</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+            <div class="stat-val">
+                @{
+                    var incompleteTours = tours.Count(t =>
+                    {
+                        var dc = t.DayCount; if (dc <= 0) return false;
+                        var pc = plansByTour.ContainsKey(t.TourId) ? plansByTour[t.TourId].Select(p => p.DayNumber).Distinct().Count() : 0;
+                        return pc < dc;
+                    });
+                }
+@incompleteTours
+            </div>
+            <div class="stat-label">Eksik Planlı</div>
+        </div>
+    </div>
+    <div class="stat-chip">
+        <div class="stat-icon" style="background:rgba(239,68,68,.1);color:#dc2626;"><i class="fa-solid fa-ban"></i></div>
+        <div>
+            <div class="stat-val">
+                @{
+                    var noPlans = tours.Count(t => !plansByTour.ContainsKey(t.TourId) || !plansByTour[t.TourId].Any());
+                }
+@noPlans
+            </div>
+            <div class="stat-label">Plansız Tur</div>
+        </div>
+    </div>
+</div>
+
+<!-- Toplu islem -->
+<div class="bulk-bar" id="bulkBar">
+    <span class="bulk-info"><span id="bulkCount">0</span> plan seçildi</span>
+    <button class="btn-bulk-danger" onclick="bulkDelete()"><i class="fa-solid fa-trash"></i> Seçilenleri Sil</button>
+    <button class="btn-ghost" style="height:34px;font-size:12px;" onclick="clearSel()"><i class="fa-solid fa-xmark"></i> İptal</button>
+</div>
+
+<!-- Toolbar -->
+<div class="toolbar">
+    <div class="search-field">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="searchInput" placeholder="Tur adı veya plan başlığında ara…" />
+    </div>
+    <select class="filter-select" id="tourFilter">
+        <option value="">Tüm Turlar</option>
+        @foreach (var t in tours)
+        {
+            <option value="@t.TourId">@t.Title</option>
+        }
+    </select>
+    <select class="filter-select" id="coverageFilter">
+        <option value="">Tüm Durumlar</option>
+        <option value="full">Tam Kapsamlı</option>
+        <option value="partial">Eksik Planlı</option>
+        <option value="empty">Plansız</option>
+    </select>
+    <span style="font-size:12px;color:var(--t3);white-space:nowrap;margin-left:auto;">
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> plan
+    </span>
+    <div class="view-toggle">
+        <button class="vt-btn active" id="btnGroup" onclick="setView('group')" title="Tur Grupları"><i class="fa-solid fa-layer-group"></i></button>
+        <button class="vt-btn" id="btnTable" onclick="setView('table')" title="Tablo"><i class="fa-solid fa-table-list"></i></button>
+    </div>
+</div>
+
+<!-- TUR GRUBU GORUNUMU -->
+<div id="groupView">
+    @if (!tours.Any())
+    {
+        <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+            <i class="fa-solid fa-map"></i>
+            <h3>Henüz tur eklenmemiş</h3>
+            <p>Önce tur oluşturun, ardından planlama yapabilirsiniz.</p>
+            <a href="/admin/turlar/yeni" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Tur Ekle</a>
+        </div>
+    }
+    else
+    {
+        <div id="groupContainer">
+            @foreach (var tour in tours)
+            {
+                var plans = plansByTour.ContainsKey(tour.TourId) ? plansByTour[tour.TourId] : new List<ResultTourPlanDto>();
+                var dayCount = tour.DayCount;
+                var coveredDays = plans.Select(p => p.DayNumber).Distinct().Count();
+                var pct = dayCount > 0 ? (int)Math.Round(coveredDays * 100.0 / dayCount) : 0;
+                var missingDays = dayCount > 0
+                ? Enumerable.Range(1, dayCount).Where(d => !plans.Any(p => p.DayNumber == d)).ToList()
+                : new List<int>();
+
+                string coverageCls, coverageTxt;
+                if (dayCount == 0) { coverageCls = ""; coverageTxt = ""; }
+                else if (coveredDays >= dayCount) { coverageCls = "coverage-full"; coverageTxt = "Tam"; }
+                else if (coveredDays == 0) { coverageCls = "coverage-empty"; coverageTxt = "Plan yok"; }
+                else { coverageCls = "coverage-partial"; coverageTxt = pct + "% Kapsam"; }
+
+                string covData = (coveredDays >= dayCount && dayCount > 0) ? "full"
+                : (coveredDays == 0) ? "empty"
+                : "partial";
+
+                <div class="tour-group"
+                     id="tg-@tour.TourId"
+                     data-tourid="@tour.TourId"
+                     data-tourname="@tour.Title.ToLower()"
+                     data-coverage="@covData">
+
+                    <!-- ── Grup basligi ── -->
+                    <div class="tour-group-header" onclick="toggleGroup('@tour.TourId')">
+                        <div class="tgh-thumb">
+                            @if (!string.IsNullOrEmpty(tour.CoverImageUrl))
+                            {
+                                <img src="@tour.CoverImageUrl" alt="@tour.Title"
+                                     onerror="this.parentElement.innerHTML='<i class=\'fa-solid fa-image\'></i>'" />
+                            }
+                            else
+                            {
+
+                                <i class="fa-solid fa-image"></i>
+                            }
+                        </div>
+
+                        <div class="tgh-info">
+                            <div class="tgh-name">@tour.Title</div>
+                            <div class="tgh-meta">
+                                @if (dayCount > 0)
+                                {
+                                    <span><i class="fa-regular fa-calendar-days"></i> @dayCount gün</span>
+                                }
+                                <span><i class="fa-solid fa-route"></i> @plans.Count plan</span>
+                                @if (missingDays.Any())
+                                {
+                                    <span style="color:#f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> @missingDays.Count gün eksik</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="tgh-right">
+                            @if (!string.IsNullOrEmpty(coverageCls))
+                            {
+                                <span class="tgh-coverage @coverageCls">@coverageTxt</span>
+                            }
+                            <span class="tgh-plan-count">@plans.Count plan</span>
+                            <a href="/TourPlan/CreateTourPlan/@tour.TourId"
+                               class="btn-icon add" title="Plan Ekle"
+                               onclick="event.stopPropagation();">
+                                <i class="fa-solid fa-plus"></i>
+                            </a>
+                            <a href="/TourPlan/TourPlanList/@tour.TourId"
+                               class="btn-icon" title="Planları Yönet"
+                               onclick="event.stopPropagation();"
+                               style="color:var(--accent);border-color:rgba(2,132,199,.25);">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                            <!-- chevron id zorunlu - JS bunu kullanıyor -->
+                            <i class="fa-solid fa-chevron-down tgh-chevron open" id="chev-@tour.TourId"></i>
+                        </div>
+                    </div>
+
+                    <!-- ── Grup govdesi ── -->
+                    <div class="tour-group-body" id="tgb-@tour.TourId">
+
+                        @if (!plans.Any())
+                        {
+                            <div style="padding:18px 20px;text-align:center;color:var(--t3);font-size:13px;">
+                                <i class="fa-solid fa-route" style="opacity:.35;margin-right:6px;"></i> Henüz plan eklenmemiş.
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var plan in plans)
+                            {
+                                var col = DayColor(plan.DayNumber);
+                                <!-- plan-item: data-tourid ve data-title JS filtresi için zorunlu -->
+                                <div class="tg-plan-row plan-item"
+                                     data-tourid="@tour.TourId"
+                                     data-title="@plan.Title.ToLower()">
+                                    <input type="checkbox" class="row-cb" value="@plan.TourPlanId"
+                                           style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;" />
+                                    <div class="tg-day-badge" style="background:@col;">@plan.DayNumber</div>
+                                    <span class="tg-plan-title">@plan.Title</span>
+                                    <div class="tg-actions">
+                                        <a href="/TourPlan/UpdateTourPlan/@plan.TourPlanId"
+                                           class="btn-icon edit" title="Düzenle">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <form asp-action="DeleteTourPlan" asp-controller="TourPlan"
+                                              asp-route-id="@plan.TourPlanId" asp-route-tourId="@plan.TourId"
+                                              method="post" style="display:inline;" id="del-@plan.TourPlanId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-icon danger" title="Sil"
+                                                    onclick="return confirm('Bu planı silmek istediğinize emin misiniz?')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            }
+
+                            @foreach (var missing in missingDays.Take(5))
+                            {
+                                <div class="tg-missing-row">
+                                    <div class="tg-missing-badge">@missing</div>
+                                    <span style="font-size:12.5px;color:#cbd5e1;font-style:italic;flex:1;">@missing. gün — plan yok</span>
+                                    <a href="/TourPlan/CreateTourPlan/@tour.TourId"
+                                       class="btn-icon add" title="Plan ekle" style="flex-shrink:0;"
+                                       onclick="event.stopPropagation();">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </a>
+                                </div>
+                            }
+                            @if (missingDays.Count > 5)
+                            {
+                                <div style="padding:7px 18px;font-size:12px;color:var(--t3);background:#fafafa;border-top:1px dashed var(--border);">
+                                    + @(missingDays.Count - 5) gün daha eksik
+                                </div>
+                            }
+                        }
+
+                        <div class="tg-add-row">
+                            <a href="/TourPlan/CreateTourPlan/@tour.TourId" class="add-link">
+                                <i class="fa-solid fa-plus"></i> Plan Ekle
+                            </a>
+                            <a href="/TourPlan/TourPlanList/@tour.TourId" class="all-link">
+                                Tüm planları yönet →
+                            </a>
+                        </div>
+
+                    </div><!-- /tour-group-body -->
+                </div>
+        
+                <!-- /tour-group -->
+            }
+        </div>
+
+        <div id="noGroupResults" style="display:none;">
+            <div class="empty-state" style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Sonuç bulunamadı</h3>
+                <p>Farklı arama terimleri veya filtreler deneyin.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- TABLO GORUNUMU -->
+<div id="tableView" style="display:none;">
+    <div class="table-card">
+        <div class="table-card-header">
+            <div>
+                <span style="font-size:14px;font-weight:700;color:var(--t1);">Tüm Planlar</span>
+                <span style="font-size:12px;color:var(--t3);margin-left:8px;">@(Model?.Count ?? 0) kayıt</span>
+            </div>
+            <button class="btn-icon" title="Yenile" onclick="location.reload()" style="width:32px;height:32px;"><i class="fa-solid fa-rotate-right"></i></button>
+        </div>
+        <div class="tbl-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="cb-cell no-sort"><input type="checkbox" id="selectAll" /></th>
+                        <th data-col="day">Gün <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="title">Başlık <i class="fa-solid fa-sort si"></i></th>
+                        <th data-col="tour" class="hide-sm">Tur <i class="fa-solid fa-sort si"></i></th>
+                        <th class="no-sort" style="text-align:right;">İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var plan in Model.OrderBy(p => p.DayNumber))
+                        {
+                            var col = DayColor(plan.DayNumber);
+                            var tourObj = tours.FirstOrDefault(t => t.TourId == plan.TourId);
+                            var tName = tourObj?.Title ?? plan.TourId;
+                            <tr class="table-plan-row"
+                                data-title="@plan.Title.ToLower()"
+                                data-day="@plan.DayNumber"
+                                data-tourid="@plan.TourId"
+                                data-tourname="@tName.ToLower()">
+                                <td class="cb-cell"><input type="checkbox" class="row-cb" value="@plan.TourPlanId" /></td>
+                                <td>
+                                    <span class="day-pill" style="background:@col;">
+                                        <i class="fa-solid fa-calendar-day" style="font-size:9px;"></i> @plan.DayNumber. Gün
+                                    </span>
+                                </td>
+                                <td style="font-size:13px;font-weight:600;color:var(--t1);">@plan.Title</td>
+                                <td class="hide-sm">
+                                    <a href="/TourPlan/TourPlanList/@plan.TourId" class="tour-link">@tName</a>
+                                </td>
+                                <td>
+                                    <div class="action-group">
+                                        <a href="/TourPlan/UpdateTourPlan/@plan.TourPlanId" class="btn-icon edit" title="Düzenle"><i class="fa-solid fa-pen"></i></a>
+                                        <form asp-action="DeleteTourPlan" asp-controller="TourPlan"
+                                              asp-route-id="@plan.TourPlanId" asp-route-tourId="@plan.TourId"
+                                              method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn-icon danger" title="Sil"
+                                                    onclick="return confirm('Bu planı silmek istediğinize emin misiniz?')">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-route"></i>
+                                    <h3>Henüz plan eklenmemiş</h3>
+                                    <p>Turlara ait günlük programlar buraya eklenecek.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div id="noTableResults" style="display:none;">
+            <div class="empty-state"><i class="fa-solid fa-magnifying-glass"></i><h3>Sonuç bulunamadı</h3><p>Farklı filtreler deneyin.</p></div>
+        </div>
+        <div class="pagination">
+            <span class="pagination-info">Toplam <strong>@(Model?.Count ?? 0)</strong> kayıt</span>
+            <div class="pagination-btns">
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-left" style="font-size:10px;"></i></button>
+                <button class="pg-btn active">1</button>
+                <button class="pg-btn" disabled><i class="fa-solid fa-chevron-right" style="font-size:10px;"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        /* Gorunum toggle */
+        function setView(v) {
+            document.getElementById('groupView').style.display = v === 'group' ? 'block' : 'none';
+            document.getElementById('tableView').style.display = v === 'table' ? 'block' : 'none';
+            document.getElementById('btnGroup').classList.toggle('active', v === 'group');
+            document.getElementById('btnTable').classList.toggle('active', v === 'table');
+            localStorage.setItem('allPlanView', v);
+            applyFilter();
+        }
+        (function(){ var s = localStorage.getItem('allPlanView'); if (s) setView(s); })();
+
+        /* Grup ac/kapat - chevron id zorunlu */
+        function toggleGroup(tourId) {
+            var grp  = document.getElementById('tg-' + tourId);
+            var chev = document.getElementById('chev-' + tourId);
+            if (!grp) return;
+            var collapsed = grp.classList.toggle('group-collapsed');
+            if (chev) chev.classList.toggle('open', !collapsed);
+        }
+
+        var allOpen = true;
+        function toggleAllGroups() {
+            allOpen = !allOpen;
+            document.querySelectorAll('.tour-group').forEach(function(g) {
+                var chev = document.getElementById('chev-' + g.dataset.tourid);
+                g.classList.toggle('group-collapsed', !allOpen);
+                if (chev) chev.classList.toggle('open', allOpen);
+            });
+            var btn = document.getElementById('toggleAllBtn');
+            btn.innerHTML = allOpen
+                ? '<i class="fa-solid fa-chevron-up"></i> Tümünü Daralt'
+                : '<i class="fa-solid fa-chevron-down"></i> Tümünü Genişlet';
+        }
+
+        /* Filtre:
+           - Grup gorunumu: data-tourid, data-coverage, data-tourname ile filtreler
+           - Plan satiri: data-title ve grup data-tourname ile arama yapar
+           - Tablo gorunumu: data-title, data-tourname, data-tourid ile filtreler
+        */
+        var searchInput    = document.getElementById('searchInput');
+        var tourFilter     = document.getElementById('tourFilter');
+        var coverageFilter = document.getElementById('coverageFilter');
+        var visibleCount   = document.getElementById('visibleCount');
+
+        function applyFilter() {
+            var q        = searchInput.value.toLowerCase().trim();
+            var selTour  = tourFilter.value;
+            var selCov   = coverageFilter.value;
+            var cnt      = 0;
+
+            /* ── Grup gorunumu ── */
+            document.querySelectorAll('.tour-group').forEach(function(g) {
+                var matchTour = !selTour || g.dataset.tourid   === selTour;
+                var matchCov  = !selCov  || g.dataset.coverage === selCov;
+                var matchName = !q       || g.dataset.tourname.includes(q);
+
+                var planItems = g.querySelectorAll('.plan-item');
+                var anyPlan   = false;
+
+                planItems.forEach(function(item) {
+                    /* plan-item sadece data-title tasir, aciklama yok */
+                    var pm = !q || item.dataset.title.includes(q) || g.dataset.tourname.includes(q);
+                    item.style.display = (pm && matchTour && matchCov) ? '' : 'none';
+                    if (pm && matchTour && matchCov) { anyPlan = true; cnt++; }
+                });
+
+                /* Grup goster: tur ve kapsam filtresini geciyorsa VE (ad eslesiyor ya da plan eslesiyor) */
+                g.style.display = (matchTour && matchCov && (matchName || anyPlan || planItems.length === 0)) ? '' : 'none';
+            });
+
+            /* ── Tablo gorunumu ── */
+            document.querySelectorAll('.table-plan-row').forEach(function(r) {
+                var show = (!q       || r.dataset.title.includes(q) || r.dataset.tourname.includes(q))
+                        && (!selTour || r.dataset.tourid === selTour);
+                r.style.display = show ? '' : 'none';
+            });
+
+            visibleCount.textContent = cnt;
+
+            /* Sonuc yok mesajlari */
+            var visGroups = Array.from(document.querySelectorAll('.tour-group')).filter(function(g){ return g.style.display !== 'none'; }).length;
+            var ng = document.getElementById('noGroupResults');
+            if (ng) ng.style.display = (visGroups === 0) ? 'block' : 'none';
+
+            var visTbl = Array.from(document.querySelectorAll('.table-plan-row')).filter(function(r){ return r.style.display !== 'none'; }).length;
+            var nt = document.getElementById('noTableResults');
+            if (nt) nt.style.display = (visTbl === 0) ? 'block' : 'none';
+        }
+
+        searchInput.addEventListener('input', applyFilter);
+        tourFilter.addEventListener('change', applyFilter);
+        coverageFilter.addEventListener('change', applyFilter);
+
+        /* Tablo sutun siralama */
+        document.querySelectorAll('th[data-col]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = this.dataset.col;
+                var asc = !this.classList.contains('asc');
+                document.querySelectorAll('th[data-col]').forEach(function(t) {
+                    t.classList.remove('asc','desc');
+                    t.querySelector('.si').className = 'fa-solid fa-sort si';
+                });
+                this.classList.add(asc ? 'asc' : 'desc');
+                this.querySelector('.si').className = 'fa-solid fa-sort-' + (asc ? 'up' : 'down') + ' si';
+                var tbody = document.getElementById('tableBody');
+                var rows  = Array.from(tbody.querySelectorAll('.table-plan-row'));
+                rows.sort(function(a, b) {
+                    if (col === 'day') return asc
+                        ? parseInt(a.dataset.day)  - parseInt(b.dataset.day)
+                        : parseInt(b.dataset.day)  - parseInt(a.dataset.day);
+                    var va = col === 'tour' ? a.dataset.tourname : a.dataset.title;
+                    var vb = col === 'tour' ? b.dataset.tourname : b.dataset.title;
+                    return asc ? (va||'').localeCompare(vb||'','tr') : (vb||'').localeCompare(va||'','tr');
+                });
+                rows.forEach(function(r){ tbody.appendChild(r); });
+            });
+        });
+
+        /* Checkbox / bulk */
+        var bulkBar   = document.getElementById('bulkBar');
+        var bulkCount = document.getElementById('bulkCount');
+        var selectAll = document.getElementById('selectAll');
+
+        function updateBulk() {
+            var checked = document.querySelectorAll('.row-cb:checked');
+            bulkCount.textContent = checked.length;
+            bulkBar.classList.toggle('visible', checked.length > 0);
+            if (selectAll) {
+                var all = document.querySelectorAll('.row-cb');
+                selectAll.indeterminate = checked.length > 0 && checked.length < all.length;
+                selectAll.checked = all.length > 0 && checked.length === all.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = selectAll.checked; });
+                updateBulk();
+            });
+        }
+
+        document.addEventListener('change', function(e) { if (e.target.matches('.row-cb')) updateBulk(); });
+
+        function clearSel() {
+            document.querySelectorAll('.row-cb').forEach(function(cb){ cb.checked = false; });
+            if (selectAll) selectAll.checked = false;
+            updateBulk();
+        }
+
+        function bulkDelete() {
+            var ids = Array.from(document.querySelectorAll('.row-cb:checked')).map(function(c){ return c.value; });
+            if (!ids.length) return;
+            if (!confirm(ids.length + ' planı kalıcı olarak silmek istediğinize emin misiniz?')) return;
+            console.log('Silinecek:', ids); // TODO: AJAX endpoint
+        }
+    </script>
+}

@@ -1,0 +1,24 @@
+﻿@model GetTourByIdDto
+<div class="tab-pane fade" id="pills-location-share" role="tabpanel"
+     aria-labelledby="pills-location-share-tab" tabindex="0">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="localtion-content-tour">
+                <div>
+                    <img src="@Model.MapLocationImageUrl" alt="Map" />
+                </div>
+                <div class="flex-three map-list mb-50">
+                    <i class="icon-18"></i>
+                    <p>@Model.MapLocationTitle</p>
+                </div>
+                <h3 class="title-location">Keşfetmeye Başla!</h3>
+                <p class="des mb-22">
+                    @Model.MapLocationDescription
+                </p>
+
+            </div>
+        </div>
+        @await Component.InvokeAsync("_TourDetailsRightSidebarComponentPartial")
+    </div>
+
+</div>

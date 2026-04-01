@@ -1,0 +1,508 @@
+﻿@model CreateReservationDto
+
+@{
+    ViewData["Title"] = "Rezervasyon Ekle";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["ActiveMenu"] = "rezervasyon";
+    ViewData["Breadcrumb"] = "Rezervasyonlar / Rezervasyon Ekle";
+
+    var tours = ViewBag.Tours as List<ResultTourDto> ?? new List<ResultTourDto>();
+}
+
+<style>
+    .page-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    /* ── Kart ─────────────────────────────────────────────────── */
+    .v-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .v-card-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .v-card-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        flex-shrink: 0;
+    }
+
+    .v-card-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    .v-card-sub {
+        font-size: 12px;
+        color: var(--t3);
+        margin-top: 1px;
+    }
+
+    .v-card-body {
+        padding: 20px;
+    }
+
+    /* ── Form ─────────────────────────────────────────────────── */
+    .form-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 16px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+        .form-group:last-child {
+            margin-bottom: 0;
+        }
+
+    label {
+        display: block;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: var(--t2);
+        margin-bottom: 6px;
+    }
+
+        label span.req {
+            color: #ef4444;
+            margin-left: 2px;
+        }
+
+    .form-control {
+        width: 100%;
+        height: 42px;
+        padding: 0 13px;
+        background: #fff;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13.5px;
+        color: var(--t1);
+        outline: none;
+        transition: border-color .18s, box-shadow .18s;
+        box-sizing: border-box;
+    }
+
+        .form-control:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .form-control.select-ctrl {
+            appearance: none;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 13px center;
+            padding-right: 36px;
+        }
+
+    .form-hint {
+        font-size: 11.5px;
+        color: var(--t3);
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .field-error {
+        font-size: 11.5px;
+        color: #ef4444;
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* input-group prefix */
+    .input-group {
+        display: flex;
+        align-items: stretch;
+    }
+
+        .input-group .form-control {
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            flex: 1;
+        }
+
+    .input-prefix {
+        display: flex;
+        align-items: center;
+        padding: 0 11px;
+        background: #f8fafc;
+        border: 1.5px solid var(--border);
+        border-right: none;
+        border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--t3);
+        white-space: nowrap;
+    }
+
+    /* ── Footer ───────────────────────────────────────────────── */
+    .form-footer {
+        padding: 14px 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 18px;
+        height: 40px;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        text-decoration: none;
+        transition: all .18s;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+        .btn-primary:hover {
+            background: #0369a1;
+            transform: translateY(-1px);
+        }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1.5px solid var(--border);
+        color: var(--t2);
+    }
+
+        .btn-ghost:hover {
+            background: var(--bg-hover);
+            color: var(--t1);
+        }
+
+    /* ── Özet kartı ───────────────────────────────────────────── */
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+    }
+
+        .summary-row:last-child {
+            border-bottom: none;
+        }
+
+    .sum-lbl {
+        color: var(--t3);
+    }
+
+    .sum-val {
+        font-weight: 700;
+        color: var(--t1);
+    }
+
+    /* ── Kod generate ─────────────────────────────────────────── */
+    .code-wrap {
+        position: relative;
+    }
+
+        .code-wrap .form-control {
+            padding-right: 80px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: .5px;
+        }
+
+    .gen-btn {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 30px;
+        padding: 0 12px;
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+        .gen-btn:hover {
+            background: #0369a1;
+        }
+
+    /* ── İpuçları ─────────────────────────────────────────────── */
+    .tip-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+        .tip-row:last-child {
+            margin-bottom: 0;
+        }
+
+    .tip-icon {
+        width: 26px;
+        height: 26px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        flex-shrink: 0;
+    }
+
+    .tip-text {
+        font-size: 12.5px;
+        color: var(--t2);
+        line-height: 1.5;
+    }
+
+        .tip-text strong {
+            color: var(--t1);
+        }
+
+    @@media(max-width:900px) {
+        .page-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .form-grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- ── Başlık ────────────────────────────────────────────────── -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+    <div>
+        <h1 style="font-size:20px;font-weight:700;color:var(--t1);">Rezervasyon Ekle</h1>
+        <p style="font-size:13px;color:var(--t3);margin-top:3px;">Yeni bir rezervasyon kaydı oluşturun.</p>
+    </div>
+    <a asp-action="ReservationList" asp-controller="Reservation" class="btn btn-ghost">
+        <i class="fa-solid fa-arrow-left"></i> Listeye Dön
+    </a>
+</div>
+
+<form method="post" id="mainForm">
+    @Html.AntiForgeryToken()
+
+    <div class="page-grid">
+
+        <!-- ── Sol: Form ── -->
+        <div>
+            <!-- Müşteri Bilgileri -->
+            <div class="v-card" style="margin-bottom:16px;">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-user"></i></div>
+                    <div>
+                        <div class="v-card-title">Müşteri Bilgileri</div>
+                        <div class="v-card-sub">İletişim ve kimlik bilgileri</div>
+                    </div>
+                </div>
+                <div class="v-card-body">
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label asp-for="NameSurname">Ad Soyad <span class="req">*</span></label>
+                            <input asp-for="NameSurname" class="form-control" placeholder="Ahmet Yılmaz" id="inpName" />
+                            <span asp-validation-for="NameSurname" class="field-error"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Email">E-posta <span class="req">*</span></label>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="ornek@mail.com" id="inpEmail" />
+                            <span asp-validation-for="Email" class="field-error"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rezervasyon Detayları -->
+            <div class="v-card" style="margin-bottom:16px;">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;"><i class="fa-solid fa-calendar-check"></i></div>
+                    <div>
+                        <div class="v-card-title">Rezervasyon Detayları</div>
+                        <div class="v-card-sub">Tur, tarih ve kişi bilgileri</div>
+                    </div>
+                </div>
+                <div class="v-card-body">
+                    <!-- Tur -->
+                    <div class="form-group">
+                        <label asp-for="TourId">Tur <span class="req">*</span></label>
+                        <select asp-for="TourId" class="form-control select-ctrl" id="inpTour" onchange="updateSummary()">
+                            <option value="">— Tur seçin —</option>
+                            @foreach (var t in ViewBag.Tours)
+                            {
+                                <option value="@t.TourId"
+                                        data-title="@t.Title"
+                                        data-price="@t.Price"
+                                        data-days="@t.DayCount">
+                                    @t.Title
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="TourId" class="field-error"></span>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <!-- Kişi sayısı -->
+                        <div class="form-group">
+                            <label asp-for="PersonCount">Kişi Sayısı <span class="req">*</span></label>
+                            <div class="input-group">
+                                <span class="input-prefix"><i class="fa-solid fa-users"></i></span>
+                                <input asp-for="PersonCount" class="form-control" type="number" min="1" max="100"
+                                       placeholder="1" id="inpPerson" oninput="calcPrice()" />
+                            </div>
+                            <span asp-validation-for="PersonCount" class="field-error"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="TotalPrice">Toplam Fiyat <span class="req">*</span></label>
+                            <div class="input-group">
+                                <span class="input-prefix">₺</span>
+                                <input asp-for="TotalPrice" class="form-control" type="number" min="0" step="0.01"
+                                       placeholder="0.00" id="inpPrice" oninput="updateSummary()" readonly />
+                            </div>
+                            <span asp-validation-for="TotalPrice" class="field-error"></span>
+                            <div class="form-hint"><i class="fa-solid fa-circle-info"></i> Tur fiyatından otomatik hesaplanır.</div>
+                        </div>
+                        
+                    </div>
+                </div>
+                <div class="form-footer">
+                    <a asp-action="ReservationList" asp-controller="Reservation" class="btn btn-ghost">İptal</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-check"></i> Rezervasyonu Kaydet
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── Sağ: Özet + İpuçları ── -->
+        <div>
+            <!-- Özet kartı -->
+            <div class="v-card" style="margin-bottom:16px;">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fa-solid fa-receipt"></i></div>
+                    <div>
+                        <div class="v-card-title">Rezervasyon Özeti</div>
+                        <div class="v-card-sub">Canlı önizleme</div>
+                    </div>
+                </div>
+                <div class="v-card-body">
+                    <div class="summary-row"><span class="sum-lbl">Müşteri</span>       <span class="sum-val" id="sumName">—</span></div>
+                    <div class="summary-row"><span class="sum-lbl">Tur</span>            <span class="sum-val" id="sumTour">—</span></div>
+                    <div class="summary-row"><span class="sum-lbl">Kişi Sayısı</span>   <span class="sum-val" id="sumPerson">—</span></div>
+                    <div class="summary-row" style="padding-top:12px;">
+                        <span class="sum-lbl" style="font-weight:700;color:var(--t1);">Toplam</span>
+                        <span style="font-size:18px;font-weight:800;color:#16a34a;" id="sumPrice">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- İpuçları -->
+            <div class="v-card">
+                <div class="v-card-header">
+                    <div class="v-card-icon" style="background:rgba(2,132,199,.1);color:var(--accent);"><i class="fa-solid fa-lightbulb"></i></div>
+                    <div><div class="v-card-title">İpuçları</div></div>
+                </div>
+                <div class="v-card-body">
+                    <div class="tip-row">
+                        <div class="tip-icon" style="background:rgba(124,58,237,.1);color:#7c3aed;"><i class="fa-solid fa-key"></i></div>
+                        <div class="tip-text"><strong>Rezervasyon kodu</strong> benzersiz olmalıdır. "Üret" butonu ile otomatik oluşturun.</div>
+                    </div>
+                    <div class="tip-row">
+                        <div class="tip-icon" style="background:rgba(22,163,74,.1);color:#16a34a;"><i class="fa-solid fa-calculator"></i></div>
+                        <div class="tip-text">Tur ve kişi sayısı seçilince <strong>toplam fiyat otomatik hesaplanır</strong>, gerekirse elle değiştirebilirsiniz.</div>
+                    </div>
+                    <div class="tip-row">
+                        <div class="tip-icon" style="background:rgba(245,158,11,.1);color:#f59e0b;"><i class="fa-solid fa-calendar"></i></div>
+                        <div class="tip-text"><strong>Tarih alanı</strong> için müşterinin tercih ettiği başlangıç tarihini girin.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        /* ── Kısaltmalar ── */
+        var inpName   = document.getElementById('inpName');
+        var inpTour   = document.getElementById('inpTour');
+        var inpPerson = document.getElementById('inpPerson');
+        var inpPrice  = document.getElementById('inpPrice');
+
+        /* ── Fiyat hesapla ── */
+        function calcPrice() {
+            var opt    = inpTour.options[inpTour.selectedIndex];
+            var price  = parseFloat(opt && opt.dataset.price ? opt.dataset.price : 0) || 0;
+            var person = parseInt(inpPerson.value) || 0;
+            if (price > 0 && person > 0) inpPrice.value = (price * person).toFixed(2);
+            updateSummary();
+        }
+
+        /* ── Özet güncelle ── */
+        function updateSummary() {
+            var opt    = inpTour.options[inpTour.selectedIndex];
+            var tName  = opt && opt.value ? (opt.dataset.title || opt.text) : null;
+            var person = parseInt(inpPerson.value) || 0;
+            var price  = parseFloat(inpPrice.value) || 0;
+            var name   = inpName.value.trim();
+
+            document.getElementById('sumName')  .textContent = name   || '—';
+            document.getElementById('sumTour')  .textContent = tName  || '—';
+            document.getElementById('sumPerson').textContent = person > 0 ? person + ' kişi' : '—';
+            document.getElementById('sumPrice') .textContent = price  > 0 ? price.toLocaleString('tr-TR') + ' ₺' : '—';
+
+        }
+
+        /* ── Tur değişince fiyat hesapla ── */
+        inpTour.addEventListener('change', calcPrice);
+        inpName.addEventListener('input',  updateSummary);
+
+
+
+        
+    </script>
+}
