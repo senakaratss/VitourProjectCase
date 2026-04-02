@@ -119,6 +119,10 @@ Vitour Project Case, seyahat ve tur rezervasyonları için geliştirilmiş moder
 
 ---
 
+<img width="1920" height="945" alt="screencapture-localhost-7029-Gallery-GalleryList-2026-04-02-15_03_13" src="https://github.com/user-attachments/assets/75e369f7-1b3b-470e-a720-3592fe87fcd5" />
+
+---
+
 <img width="1920" height="1277" alt="Review List Admin" src="https://github.com/user-attachments/assets/b63b97a4-f22a-4e60-90c6-4617fcffcdd0" />
 
 ---
