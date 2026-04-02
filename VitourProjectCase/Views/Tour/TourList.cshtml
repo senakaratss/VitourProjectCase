@@ -1,4 +1,5 @@
 ﻿@model List<ResultTourDto>
+@inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer localizer
 
 @{
     ViewData["Title"] = "Turlar";
@@ -748,11 +749,11 @@
 <!-- ── Sayfa Başlığı ─────────────────────────────────────────── -->
 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:12px;">
     <div>
-        <h1 style="font-size:20px; font-weight:700; color:var(--t1);">Turlar</h1>
-        <p style="font-size:13px; color:var(--t3); margin-top:3px;">Tüm turları buradan yönetebilirsiniz.</p>
+        <h1 style="font-size:20px; font-weight:700; color:var(--t1);">@localizer["Turlar"]</h1>
+        <p style="font-size:13px; color:var(--t3); margin-top:3px;">@localizer["Tüm turları buradan yönetebilirsiniz."]</p>
     </div>
     <a href="/Tour/CreateTour/" class="btn btn-primary">
-        <i class="fa-solid fa-plus"></i> Yeni Tur Ekle
+        <i class="fa-solid fa-plus"></i> @localizer["Yeni Tur Ekle"]
     </a>
 </div>
 
@@ -764,7 +765,7 @@
         </div>
         <div>
             <div class="stat-val">@(Model?.Count ?? 0)</div>
-            <div class="stat-label">Toplam Tur</div>
+            <div class="stat-label">@localizer["Toplam Tur"]</div>
         </div>
     </div>
 
@@ -774,7 +775,7 @@
         </div>
         <div>
             <div class="stat-val">@(Model?.Count(t => t.Status) ?? 0)</div>
-            <div class="stat-label">Aktif</div>
+            <div class="stat-label">@localizer["Aktif"]</div>
         </div>
     </div>
 
@@ -784,7 +785,7 @@
         </div>
         <div>
             <div class="stat-val">@(Model?.Count(t => !t.Status) ?? 0)</div>
-            <div class="stat-label">Pasif</div>
+            <div class="stat-label">@localizer["Pasif"]</div>
         </div>
     </div>
 
@@ -804,7 +805,7 @@
                     <text>—</text>
                 }
             </div>
-            <div class="stat-label">Ort. Fiyat (₺)</div>
+            <div class="stat-label">@localizer["Ort. Fiyat"] (₺)</div>
         </div>
     </div>
 
@@ -814,7 +815,7 @@
         </div>
         <div>
             <div class="stat-val">@(Model?.Count(t => t.Badge == "Popüler") ?? 0)</div>
-            <div class="stat-label">Popüler Tur</div>
+            <div class="stat-label">@localizer["Popüler Tur"]</div>
         </div>
     </div>
 </div>
@@ -834,17 +835,17 @@
 <div class="toolbar">
     <div class="search-field">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="text" id="searchInput" placeholder="Tur adı veya açıklama ara…" />
+        <input type="text" id="searchInput" placeholder="@localizer["Tur adı veya açıklama ara…"]" />
     </div>
 
     <select class="filter-select" id="statusFilter">
-        <option value="">Tüm Durumlar</option>
+        <option value="">@localizer["Tüm Durumlar"]</option>
         <option value="active">Aktif</option>
         <option value="inactive">Pasif</option>
     </select>
 
     <select class="filter-select" id="badgeFilter">
-        <option value="">Tüm Rozetler</option>
+        <option value="">@localizer["Tüm Rozetler"]</option>
         <option value="Yeni">Yeni</option>
         <option value="Popüler">Popüler</option>
         <option value="İndirim">İndirim</option>
@@ -852,7 +853,7 @@
     </select>
 
     <select class="filter-select" id="categoryFilter">
-        <option value="">Tüm Kategoriler</option>
+        <option value="">@localizer["Tüm Kategoriler"]</option>
         @if (ViewBag.Categories != null)
         {
             foreach (var cat in (List<SelectListItem>)ViewBag.Categories)
@@ -863,7 +864,7 @@
     </select>
 
     <span style="font-size:12px; color:var(--t3); white-space:nowrap; margin-left:auto;">
-        <span id="visibleCount">@(Model?.Count ?? 0)</span> sonuç
+        <span id="visibleCount">@(Model?.Count ?? 0)</span> @localizer["sonuç"]
     </span>
 
     <div class="view-toggle">
@@ -883,8 +884,8 @@
     <div class="table-card">
         <div class="table-card-header">
             <div>
-                <span class="table-card-title">Tur Listesi</span>
-                <span class="table-card-meta">Toplam @(Model?.Count ?? 0) kayıt</span>
+                <span class="table-card-title">@localizer["Tur Listesi"]</span>
+                <span class="table-card-meta">@localizer["Toplam"] @(Model?.Count ?? 0) @localizer["kayıt"]</span>
             </div>
             <div style="display:flex; gap:6px;">
                 <a href="@Url.Action("DownloadToursExcel","Report")" class="btn-icon" title="CSV Dışa Aktar">
@@ -903,13 +904,13 @@
                         <th class="cb-cell no-sort">
                             <input type="checkbox" id="selectAll" title="Tümünü Seç" />
                         </th>
-                        <th data-col="title">Tur <i class="fa-solid fa-sort sort-icon"></i></th>
-                        <th data-col="category" class="hide-sm">Kategori <i class="fa-solid fa-sort sort-icon"></i></th>
-                        <th data-col="days" class="hide-sm">Süre <i class="fa-solid fa-sort sort-icon"></i></th>
-                        <th data-col="capacity" class="hide-sm">Kapasite <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="title">@localizer["Tur"] <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="category" class="hide-sm">@localizer["Kategori"] <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="days" class="hide-sm">@localizer["Süre"] <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th data-col="capacity" class="hide-sm">@localizer["Kapasite"] <i class="fa-solid fa-sort sort-icon"></i></th>
                         <th data-col="price">Fiyat <i class="fa-solid fa-sort sort-icon"></i></th>
-                        <th data-col="status" class="hide-sm">Durum <i class="fa-solid fa-sort sort-icon"></i></th>
-                        <th class="no-sort" style="text-align:right;">İşlemler</th>
+                        <th data-col="status" class="hide-sm">@localizer["Durum"] <i class="fa-solid fa-sort sort-icon"></i></th>
+                        <th class="no-sort" style="text-align:right;">@localizer["İşlemler"]</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -972,12 +973,12 @@
 
                                 <td class="hide-sm">
                                     <span class="num-cell">@tour.DayCount</span>
-                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">gün</span>
+                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">@localizer["gün"]</span>
                                 </td>
 
                                 <td class="hide-sm">
                                     <span class="num-cell">@tour.Capacity</span>
-                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">kişi</span>
+                                    <span style="font-size:11px; color:var(--t3); margin-left:2px;">@localizer["kişi"]</span>
                                 </td>
 
                                 <td>
@@ -990,13 +991,13 @@
                                     @if (tour.Status)
                                     {
                                         <span class="status-badge badge-active">
-                                            <span class="pip"></span> Aktif
+                                            <span class="pip"></span> @localizer["Aktif"]
                                         </span>
                                     }
                                     else
                                     {
                                         <span class="status-badge badge-inactive">
-                                            <span class="pip"></span> Pasif
+                                            <span class="pip"></span> @localizer["Pasif"]
                                         </span>
                                     }
                                 </td>
@@ -1061,7 +1062,7 @@
         <!-- Sayfalama -->
         <div class="pagination">
             <span class="pagination-info">
-                Toplam <strong>@(Model?.Count ?? 0)</strong> kayıt
+                @localizer["Toplam"] <strong>@(Model?.Count ?? 0)</strong> @localizer["kayıt"]
             </span>
             <div class="pagination-btns">
                 <button class="pg-btn" disabled>
