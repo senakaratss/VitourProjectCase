@@ -35,7 +35,7 @@ Vitour Project Case, seyahat ve tur rezervasyonları için geliştirilmiş moder
 
 ## 🔹 Teknik Altyapı ve Standartlar
 - **Modüler Mimari:** `Services`, `Entities` ve `DTOs` klasörleri ile **interface segregasyon prensibine uygun** yapı.  
-- **Çoklu Dil (Localization):** Sistem menülerde **Türkçe ve İngilizce** dil desteği sunar.  
+- **Çoklu Dil (Localization):** Sistem menüler ve arayüz metinlerinde **Türkçe ve İngilizce** dil desteği sunar.  
 - **Asenkron Veri Yönetimi:** Tüm veri erişim süreçleri `MongoDB.Driver` üzerinden **async/await** ile yönetilmektedir.
 
 ---
@@ -123,7 +123,8 @@ Vitour Project Case, seyahat ve tur rezervasyonları için geliştirilmiş moder
 
 ---
 
-<img width="1920" height="968" alt="Category List Admin" src="https://github.com/user-attachments/assets/efec2cc0-abd3-485a-8581-4b8f9b1eeab7" />
+<img width="1694" height="1144" alt="Screenshot_2026-04-02_11-31-29" src="https://github.com/user-attachments/assets/7867fd58-faca-4735-9d75-aafadc83dddd" />
+
 
 ### Excel / PDF Raporlama
 <img width="1898" height="979" alt="Report Export" src="https://github.com/user-attachments/assets/9a38ddab-9568-40a6-aa91-0d517bc9b9ab" />
